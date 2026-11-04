@@ -1,0 +1,2816 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KRM Transportes — Automação Inteligente FOPAG Motoristas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="krm-vault.js"></script>
+  <style>
+    :root {
+      --bg-body: #0b1120;
+      --bg-surface: #111827;
+      --bg-card: #1e293b;
+      --bg-card-hover: #263449;
+      --bg-input: #0f172a;
+      --bg-input-focus: #1e293b;
+      --border: #334155;
+      --border-subtle: #1e293b;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-soft: rgba(59, 130, 246, 0.14);
+      --emerald: #10b981;
+      --emerald-hover: #059669;
+      --emerald-soft: rgba(16, 185, 129, 0.14);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245, 158, 11, 0.15);
+      --rose: #f43f5e;
+      --rose-soft: rgba(244, 63, 94, 0.15);
+      --purple: #8b5cf6;
+      --purple-soft: rgba(139, 92, 246, 0.15);
+      --cyan: #06b6d4;
+      --cyan-soft: rgba(6, 182, 212, 0.15);
+      --radius: 10px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="light"] {
+      --bg-body: #f1f5f9;
+      --bg-surface: #ffffff;
+      --bg-card: #f8fafc;
+      --bg-card-hover: #f1f5f9;
+      --bg-input: #ffffff;
+      --bg-input-focus: #eff6ff;
+      --border: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --primary-soft: rgba(59, 130, 246, 0.1);
+      --emerald-soft: rgba(16, 185, 129, 0.12);
+      --amber-soft: rgba(245, 158, 11, 0.14);
+      --rose-soft: rgba(244, 63, 94, 0.12);
+      --purple-soft: rgba(139, 92, 246, 0.12);
+      --cyan-soft: rgba(6, 182, 212, 0.12);
+      --shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    /* LOCK SCREEN */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, #1e293b 0%, #0b1120 75%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .lock-card {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 440px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      text-align: center;
+      color: #f8fafc;
+    }
+    .lock-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+    }
+    .lock-card h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .lock-card p { font-size: 13px; color: #94a3b8; margin-bottom: 22px; }
+    .lock-input-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .lock-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+    .lock-input:focus { border-color: #3b82f6; }
+    .lock-error {
+      color: #f43f5e;
+      font-size: 12px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .lock-divider {
+      margin: 18px 0;
+      border-top: 1px solid #1e293b;
+      position: relative;
+    }
+    .lock-divider span {
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111827;
+      padding: 0 10px;
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      color: #fff;
+      letter-spacing: -0.5px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .pill-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 13px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:hover { background: var(--bg-card-hover); border-color: var(--text-muted); }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .btn-emerald {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #fff;
+    }
+    .btn-emerald:hover { background: var(--emerald-hover); border-color: var(--emerald-hover); }
+    .btn-purple {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: #fff;
+    }
+    .btn-purple:hover { filter: brightness(1.1); }
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+
+    /* TOGGLE AUTO SOLVE */
+    .auto-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--emerald-soft);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--emerald);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .auto-toggle input { accent-color: var(--emerald); width: 15px; height: 15px; cursor: pointer; }
+
+    /* KPI STRIP */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--bg-body);
+    }
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* TABS & FILTERS BAR */
+    .workspace-nav {
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+    }
+    .sheet-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      padding-top: 8px;
+    }
+    .sheet-tab {
+      padding: 9px 14px;
+      border-radius: 8px 8px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .sheet-tab:hover { color: var(--text-main); background: var(--bg-card); }
+    .sheet-tab.active {
+      color: var(--primary);
+      background: var(--bg-body);
+      border-color: var(--border);
+      border-bottom: 2px solid var(--primary);
+    }
+    .tab-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+    .sheet-tab.active .tab-count {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    /* TOOLBAR BELOW TABS */
+    .toolbar {
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      position: relative;
+      min-width: 240px;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 12px 7px 30px;
+      color: var(--text-main);
+      font-size: 12.5px;
+      outline: none;
+    }
+    .search-box input:focus { border-color: var(--primary); }
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .filter-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* LEGEND BANNER */
+    .legend-bar {
+      padding: 7px 20px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+    .legend-items {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    /* TABLE CONTAINER */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      max-height: calc(100vh - 285px);
+      background: var(--bg-surface);
+    }
+    table.fopag-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+    }
+    table.fopag-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 8px 7px;
+      border-bottom: 2px solid var(--border);
+      border-right: 1px solid var(--border-subtle);
+      white-space: nowrap;
+      text-align: right;
+    }
+    table.fopag-table thead th.col-sticky-1 {
+      position: sticky;
+      left: 0;
+      z-index: 30;
+      text-align: center;
+      width: 54px;
+      min-width: 54px;
+    }
+    table.fopag-table thead th.col-sticky-2 {
+      position: sticky;
+      left: 54px;
+      z-index: 30;
+      text-align: left;
+      min-width: 230px;
+      max-width: 260px;
+      border-right: 2px solid var(--border);
+    }
+
+    /* Header Group Accents */
+    th.th-input {
+      background: rgba(59, 130, 246, 0.18) !important;
+      color: #60a5fa !important;
+      border-bottom-color: #3b82f6 !important;
+    }
+    [data-theme="light"] th.th-input {
+      background: #dbeafe !important;
+      color: #1d4ed8 !important;
+    }
+    th.th-ficha {
+      background: rgba(16, 185, 129, 0.22) !important;
+      color: #34d399 !important;
+      border-bottom-color: #10b981 !important;
+    }
+    [data-theme="light"] th.th-ficha {
+      background: #d1fae5 !important;
+      color: #047857 !important;
+    }
+    th.th-solver {
+      background: rgba(139, 92, 246, 0.18) !important;
+      color: #c4b5fd !important;
+      border-bottom-color: #8b5cf6 !important;
+    }
+    [data-theme="light"] th.th-solver {
+      background: #ede9fe !important;
+      color: #6d28d9 !important;
+    }
+    th.th-desc {
+      background: rgba(245, 158, 11, 0.16) !important;
+      color: #fbbf24 !important;
+      border-bottom-color: #f59e0b !important;
+    }
+    [data-theme="light"] th.th-desc {
+      background: #fef3c7 !important;
+      color: #b45309 !important;
+    }
+
+    table.fopag-table tbody tr {
+      transition: background 0.1s;
+    }
+    table.fopag-table tbody tr:hover td {
+      background: var(--bg-card-hover);
+    }
+    table.fopag-table tbody td {
+      padding: 4px 6px;
+      border-bottom: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      text-align: right;
+      white-space: nowrap;
+      background: var(--bg-surface);
+    }
+    table.fopag-table tbody td.col-sticky-1 {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      text-align: center;
+      color: var(--text-muted);
+      font-weight: 600;
+      background: var(--bg-surface);
+    }
+    table.fopag-table tbody td.col-sticky-2 {
+      position: sticky;
+      left: 54px;
+      z-index: 10;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      border-right: 2px solid var(--border);
+      background: var(--bg-surface);
+      min-width: 230px;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Editable Cell Input */
+    .cell-input-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 3px;
+    }
+    .cell-input {
+      width: 82px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 4px 6px;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .cell-input:focus {
+      border-color: var(--primary);
+      background: var(--bg-input-focus);
+      box-shadow: 0 0 0 2px var(--primary-soft);
+    }
+    .cell-input.input-ficha {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: rgba(16, 185, 129, 0.07);
+      color: var(--emerald);
+      font-weight: 700;
+      width: 88px;
+    }
+    .cell-input.input-solver {
+      width: 58px;
+      border-color: rgba(139, 92, 246, 0.45);
+      background: rgba(139, 92, 246, 0.07);
+      color: #c4b5fd;
+    }
+    [data-theme="light"] .cell-input.input-solver {
+      color: #5b21b6;
+    }
+    .cell-input.input-small {
+      width: 44px;
+      text-align: center;
+    }
+    .cell-input.input-desc {
+      width: 74px;
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    /* Mini Proportional Button */
+    .btn-prop {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-prop:hover { background: var(--primary); color: #fff; }
+
+    /* Badges for W (Ajuste) */
+    .badge-w {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 11.5px;
+    }
+    .badge-w.zero {
+      background: var(--emerald-soft);
+      color: var(--emerald);
+    }
+    .badge-w.warn {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+    .badge-w.err {
+      background: var(--rose-soft);
+      color: var(--rose);
+    }
+
+    /* TOTAIS FOOTER ROW */
+    table.fopag-table tfoot td {
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+      background: var(--bg-card);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 9px 6px;
+      border-top: 2px solid var(--primary);
+      border-right: 1px solid var(--border-subtle);
+      text-align: right;
+      color: var(--text-main);
+    }
+    table.fopag-table tfoot td.col-sticky-1,
+    table.fopag-table tfoot td.col-sticky-2 {
+      z-index: 30;
+      background: var(--bg-card);
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 800; }
+
+    /* TOAST */
+    #toastContainer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 5000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: #1e293b;
+      color: #f8fafc;
+      border-left: 4px solid var(--emerald);
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      font-size: 12.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* SUMMARY & PARAMS VIEWS */
+    .panel-view {
+      padding: 20px;
+      display: none;
+    }
+    .panel-view.active { display: block; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .summary-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .summary-card h3 {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--border-subtle);
+      font-size: 12.5px;
+    }
+    .stat-row span:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+
+    /* STEP-BY-STEP GUIDE STRIP */
+    .guide-banner {
+      background: linear-gradient(90deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.12));
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+    }
+    .guide-banner-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .guide-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .guide-step-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .guide-step-box h4 {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: var(--text-main);
+    }
+    .guide-step-box p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .guide-card-full {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .guide-card-full h3 {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .guide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .guide-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .guide-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--emerald);
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TELA DE DESBLOQUEIO LGPD (Para GitHub Pages) -->
+  <div id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-logo">KRM</div>
+      <h1>Sistema FOPAG Motoristas</h1>
+      <p>Automação Inteligente de Folha, Diárias, Horas & Impostos 2026.<br>Digite a senha da KRM para abrir a planilha protegida:</p>
+      <div class="lock-input-wrap">
+        <input type="password" id="vaultPassInput" class="lock-input" placeholder="Senha de acesso..." autocomplete="off" onkeydown="if(event.key==='Enter') unlockVault()" />
+        <button class="btn btn-primary" onclick="unlockVault()">Desbloquear</button>
+      </div>
+      <div id="lockError" class="lock-error">Senha incorreta. Tente novamente ou envie a planilha abaixo.</div>
+      <div class="lock-divider"><span>ou abra seu arquivo direto</span></div>
+      <label class="btn" style="width:100%; justify-content:center; padding:11px;">
+        📂 Selecionar Planilha Excel (.xlsx) do Computador
+        <input type="file" accept=".xlsx" style="display:none" onchange="handleFileUpload(event)" />
+      </label>
+    </div>
+  </div>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-badge">KRM</div>
+      <div>
+        <div class="brand-title">
+          KRM Transportes — Automação FOPAG
+          <span class="pill-tag">TABELAS 2026 ATIVAS</span>
+        </div>
+        <div class="brand-sub">Motor de Engenharia Reversa: preencha apenas Ficha, Adiantamento e Descontos — o sistema calcula Diárias e Horas sozinho.</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <label class="auto-toggle" title="Quando ativado, ao alterar o Salário Ficha (Y), Adiantamento (Z) ou Descontos, o sistema calcula as Diárias e Horas automaticamente para cravar o Ajuste W em R$ 0,00!">
+        <input type="checkbox" id="chkAutoSolve" checked onchange="toggleAutoSolve(this.checked)" />
+        ⚡ Auto-Completar Horas ao Digitar
+      </label>
+
+      <button class="btn btn-purple" onclick="solveCurrentSheet()" title="Calcula automaticamente Diárias e Horas de todos os motoristas desta aba para zerar a coluna AJUSTE (W)">
+        🎯 Auto-Zerar Aba Atual
+      </button>
+
+      <button class="btn btn-primary" onclick="solveAllSheets()" title="Executa o Motor de Engenharia Reversa nos 133 motoristas de todas as 6 abas de uma só vez">
+        🚀 Auto-Zerar Todos (133)
+      </button>
+
+      <button class="btn btn-emerald" onclick="exportReadyXlsx()" title="Baixa a planilha Excel (.xlsx) completa com todas as cores, bordas e fórmulas originais da KRM prontas!">
+        📥 Baixar Excel Pronto (.xlsx)
+      </button>
+
+      <label class="btn" title="Carregar outra planilha Excel (.xlsx) do computador">
+        📂 Abrir .xlsx
+        <input type="file" accept=".xlsx" style="display:none" onchange="handleFileUpload(event)" />
+      </label>
+
+      <button class="btn" onclick="openNewDriverModal()" title="Cadastrar novo motorista na aba atual">
+        ➕ Motorista
+      </button>
+
+      <button class="btn" onclick="switchTab('guide')" style="border-color:var(--primary); color:var(--primary)" title="Abrir o manual completo passo a passo de como usar o sistema">
+        📖 Guia Passo a Passo
+      </button>
+
+      <button class="btn" onclick="resetToOriginal()" title="Desfazer alterações e voltar aos valores originais da planilha">
+        🔄 Restaurar
+      </button>
+
+      <button class="btn" onclick="toggleTheme()" id="btnTheme" title="Alternar Tema Claro / Escuro">
+        ☀️
+      </button>
+    </div>
+  </header>
+
+  <!-- FAIXA RÁPIDA DE PASSO A PASSO (INTUITIVO PARA A NATANI) -->
+  <section class="guide-banner" id="quickGuideBanner">
+    <div class="guide-banner-top">
+      <div style="font-weight:800; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+        <span>👋 Como fechar a folha em 4 passos simples:</span>
+        <span style="font-weight:500; font-size:11.5px; color:var(--text-muted)">(Você não precisa mais chutar horas nem diárias no Excel!)</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-sm btn-primary" onclick="switchTab('guide')">📖 Ver Manual Detalhado</button>
+        <button class="btn btn-sm" onclick="toggleQuickBanner()">✕ Ocultar Dica</button>
+      </div>
+    </div>
+    <div class="guide-steps-grid">
+      <div class="guide-step-box">
+        <div class="step-num">1</div>
+        <div>
+          <h4>Escolha a Aba da Empresa</h4>
+          <p>Clique na aba desejada (<b>KRM Mensal</b>, <b>KRM Comissão</b>, <b>JR</b> ou <b>Kipper</b>). Ou clique em <b>📂 Abrir .xlsx</b> se quiser carregar uma planilha nova do seu PC.</p>
+        </div>
+      </div>
+      <div class="guide-step-box">
+        <div class="step-num" style="background:var(--emerald)">2</div>
+        <div>
+          <h4>Digite só Ficha, Adt e Descontos</h4>
+          <p>Preencha apenas <b style="color:var(--emerald)">Sal. Ficha (Y)</b>, <b style="color:#60a5fa">Adt Quinz (Z)</b> e <b style="color:#fbbf24">Descontos (AL..AO)</b>. Aperte <b>Enter</b> para descer para o próximo motorista!</p>
+        </div>
+      </div>
+      <div class="guide-step-box">
+        <div class="step-num" style="background:var(--purple)">3</div>
+        <div>
+          <h4>O Robô Calcula Diárias e Horas</h4>
+          <p>As colunas roxas (<b>Diárias, Art. 66, Noturna, HE 50%/100%</b>) são preenchidas sozinhas para cravar o <b>AJUSTE (W) em R$ 0,00</b>.</p>
+        </div>
+      </div>
+      <div class="guide-step-box">
+        <div class="step-num" style="background:#059669">4</div>
+        <div>
+          <h4>Baixe o Excel Pronto (.xlsx)</h4>
+          <p>Terminou? Clique no botão verde <b>📥 Baixar Excel Pronto (.xlsx)</b> lá no topo. Ele baixa a planilha original da KRM toda preenchida e formatada!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI STRIP -->
+  <section class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label"><span>Motoristas na Aba</span> <span id="kpiSheetBadge" style="color:var(--primary)">KRM MENSAL</span></div>
+      <div class="kpi-value" id="kpiDriversCount">0</div>
+      <div class="kpi-sub" id="kpiSolvedCount">0 com Ajuste R$ 0,00 cravado</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span>Total Salário Bruto (U)</span> <span>📈</span></div>
+      <div class="kpi-value" id="kpiTotalBruto">R$ 0,00</div>
+      <div class="kpi-sub" id="kpiTotalDiarias">Diárias (G): R$ 0,00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span>Total Vale / Sal. Ficha (Y)</span> <span style="color:var(--emerald)">🎯 META</span></div>
+      <div class="kpi-value" id="kpiTotalFicha" style="color:var(--emerald)">R$ 0,00</div>
+      <div class="kpi-sub" id="kpiTotalLiquido">Total Líquido (AQ): R$ 0,00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span>Adiant. Quinzenal (Z)</span> <span>💸</span></div>
+      <div class="kpi-value" id="kpiTotalAdt">R$ 0,00</div>
+      <div class="kpi-sub" id="kpiTotalOutrosDesc">Convênios/CEF (AL:AO): R$ 0,00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span>INSS (AB) + IRRF 2026 (AK)</span> <span>🏛️</span></div>
+      <div class="kpi-value" id="kpiTotalImpostos">R$ 0,00</div>
+      <div class="kpi-sub" id="kpiImpostosSplit">INSS: R$ 0,00 | IRRF: R$ 0,00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span>Diferença / Ajuste Total (W)</span> <span>⚖️</span></div>
+      <div class="kpi-value" id="kpiTotalAjuste">R$ 0,00</div>
+      <div class="kpi-sub" id="kpiAjusteStatus">Meta: R$ 0,00 em todas as linhas</div>
+    </div>
+  </section>
+
+  <!-- ABAS DA PLANILHA -->
+  <nav class="workspace-nav">
+    <div class="sheet-tabs" id="sheetTabsContainer"></div>
+  </nav>
+
+  <!-- VISÃO DE PLANILHA OPERACIONAL -->
+  <main id="sheetView">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar motorista por nome ou código..." oninput="renderTable()" />
+        </div>
+
+        <select id="filterMode" class="filter-select" onchange="renderTable()">
+          <option value="all">📋 Mostrar Todos os Motoristas</option>
+          <option value="unsolved">⚠️ Com Ajuste Pendente (|W| > R$ 0,02)</option>
+          <option value="zero_ficha">⭕ Sem Salário Ficha (Y = 0)</option>
+          <option value="has_irrf">🏛️ Com Retenção de IRRF 2026 (AK > 0)</option>
+          <option value="base_gt_ficha">🚨 Alerta: Base Líquida Maior que Ficha</option>
+        </select>
+
+        <select id="viewColumnsMode" class="filter-select" onchange="renderTable()">
+          <option value="compact">✨ Visão Direta Natani (Foco Inputs + Horas + Ajuste)</option>
+          <option value="full">📊 Visão Planilha Completa (Todas as 43 Colunas R$)</option>
+        </select>
+      </div>
+
+      <div class="toolbar-right">
+        <span style="font-size:11.5px; color:var(--text-muted)">
+          💡 Dica: clique em <b>📅 /30</b> ao lado do Salário para calcular dias proporcionais (férias/admissão/afastamento).
+        </span>
+      </div>
+    </div>
+
+    <div class="legend-bar">
+      <div class="legend-items">
+        <span><i class="legend-dot" style="background:#3b82f6"></i><b>Azul:</b> Base / Comissão / Adiantamento (Você digita)</span>
+        <span><i class="legend-dot" style="background:#10b981"></i><b>Verde:</b> Salário Ficha / Vale Ficha (Sua Meta Líquida)</span>
+        <span><i class="legend-dot" style="background:#f59e0b"></i><b>Amarelo:</b> Descontos (Farmácia, Plano, Vale, Empréstimo CEF)</span>
+        <span><i class="legend-dot" style="background:#8b5cf6"></i><b>Roxo:</b> Diárias e Horas (Calculadas sozinhas pelo Robô!)</span>
+      </div>
+      <div id="saveStatusIndicator" style="font-weight:600; color:var(--emerald)">✓ Salvo automaticamente no navegador</div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="fopag-table" id="fopagTable">
+        <thead id="fopagThead"></thead>
+        <tbody id="fopagTbody"></tbody>
+        <tfoot id="fopagTfoot"></tfoot>
+      </table>
+    </div>
+  </main>
+
+  <!-- VISÃO RESUMO EXECUTIVO (TODAS AS EMPRESAS) -->
+  <section id="summaryView" class="panel-view">
+    <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <h2 style="font-size:18px; font-weight:800;">📊 Resumo Geral Consolidado — Grupo KRM / JR / KIPPER</h2>
+        <p style="color:var(--text-muted); font-size:12.5px;">Fechamento consolidado das 6 abas operacionais (133 motoristas).</p>
+      </div>
+      <button class="btn btn-primary" onclick="solveAllSheets()">🚀 Auto-Zerar Ajustes de Todas as Empresas</button>
+    </div>
+    <div class="summary-grid" id="summaryGridContainer"></div>
+  </section>
+
+  <!-- VISÃO PARÂMETROS E TABELAS 2026 -->
+  <section id="paramsView" class="panel-view">
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h3>⚙️ Parâmetros Operacionais ('Base Calculos')</h3>
+        <div class="stat-row"><span>Piso Salarial Motorista Carreta ($B$22)</span><span>R$ 3.454,00</span></div>
+        <div class="stat-row"><span>Piso Salarial Motorista Truck ($B$23)</span><span>R$ 2.867,00</span></div>
+        <div class="stat-row"><span>Divisor de Horas Mensais ($B$27)</span><span>220 horas</span></div>
+        <div class="stat-row"><span>Valor da Diária (Almoço + Janta + Pernoite $I$35)</span><span>R$ 80,85 / dia</span></div>
+        <div class="stat-row"><span>Fração de DSR ($C$31 / $D$31)</span><span>5 dom/fer ÷ 25 dias úteis (20%)</span></div>
+      </div>
+
+      <div class="summary-card">
+        <h3>🏛️ Tabela Progressiva INSS 2026 ($A$3:$D$6)</h3>
+        <div class="stat-row"><span>Até R$ 1.621,00</span><span>7,5% (Ded. R$ 0,00)</span></div>
+        <div class="stat-row"><span>De R$ 1.621,01 até R$ 2.902,84</span><span>9,0% (Ded. R$ 24,32)</span></div>
+        <div class="stat-row"><span>De R$ 2.902,85 até R$ 4.354,27</span><span>12,0% (Ded. R$ 111,40)</span></div>
+        <div class="stat-row"><span>Acima de R$ 4.354,28 (Fórmula KRM)</span><span>14,0% (Ded. R$ 198,49)</span></div>
+      </div>
+
+      <div class="summary-card">
+        <h3>🦁 Tabela IRRF 2026 + Novo Redutor ($A$11:$L$7)</h3>
+        <div class="stat-row"><span>Dedução por Dependente ($B$18)</span><span>R$ 189,59</span></div>
+        <div class="stat-row"><span>Desconto Simplificado Mensal ($L$7)</span><span>R$ 607,20</span></div>
+        <div class="stat-row"><span>Isenção Total (Redutor 2026 $L$3)</span><span>Rend. Trib. (AA - Z) ≤ R$ 5.000,00</span></div>
+        <div class="stat-row"><span>Faixa de Transição Redutor ($L$4)</span><span>De R$ 5.000,01 até R$ 7.350,00</span></div>
+        <div class="stat-row"><span>Fórmula Transição ($L$5 - $L$6 × Rend)</span><span>978,62 - 0,133145 × (AA - Z)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISÃO GUIA PASSO A PASSO DA NATANI -->
+  <section id="guideView" class="panel-view">
+    <div style="max-width:960px; margin:0 auto;">
+      <div style="margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:800;">📖 Guia Passo a Passo — Como Fechar a Folha FOPAG sem Sofrer</h2>
+          <p style="color:var(--text-muted); font-size:13px;">Manual prático feito sob medida para a rotina da KRM, JR e Kipper.</p>
+        </div>
+        <button class="btn btn-primary" onclick="switchTab('krm_mensal')">← Voltar para a Planilha</button>
+      </div>
+
+      <div class="guide-card-full">
+        <h3>1️⃣ O que mudou? (Fim do "Chute" de Horas no Excel)</h3>
+        <ul class="guide-list">
+          <li><b>Como era antes:</b> Você digitava o <b>Vale Ficha (Y)</b>, o <b>Adiantamento (Z)</b> e os <b>Descontos (AL..AO)</b>, e depois precisava ficar chutando números aleatórios em <i>Diárias (F), Art. 66 (I/K), Adicional Noturno (M) e Horas Extras (O/S)</i> tentando fazer o <b>Total Líquido (AQ)</b> bater com o <b>Vale Ficha (Y)</b> e o <b>Ajuste (W)</b> ficar perto de zero.</li>
+          <li><b>Como funciona agora:</b> Você digita <b>apenas os valores que vêm prontos na sua mão</b>. Assim que você digita e aperta <b>Enter</b>, o sistema faz a conta inversa de trás pra frente (já descontando DSR, INSS 2026 e IRRF 2026) e preenche as Diárias e Horas sozinho para cravar <b>AJUSTE (W) = R$ 0,00</b>!</li>
+        </ul>
+      </div>
+
+      <div class="guide-card-full">
+        <h3>2️⃣ Passo a Passo para Lançar os Motoristas</h3>
+        <ul class="guide-list">
+          <li><b>Passo A — Escolha a Aba:</b> Lá em cima, clique na aba que você está fechando: <b>KRM MENSAL</b>, <b>KRM COMISSÃO</b>, <b>JR MENSAL</b>, <b>JR COMISSÃO</b>, <b>KIPPER MENSAL</b> ou <b>KIPPER COMISSÃO</b>.</li>
+          <li><b>Passo B — Confira o Salário Base ou Comissão (Colunas Azuis D e E):</b>
+            <br>• Nos <b>Mensalistas</b>, o piso padrão (R$ 3.454,00 ou R$ 2.867,00) já vem preenchido.
+            <br>• <b>Teve Férias, Atestado ou Admissão no meio do mês?</b> Clique no botãozinho azul <b><code>/30</code></b> ao lado do salário do motorista! Uma janelinha abre para você digitar quantos dias ele trabalhou (ex.: <code>21</code> dias de 30) e o sistema já calcula e preenche o salário proporcional exato!
+            <br>• Nos <b>Comissionados</b>, basta digitar o valor da <b>Comissão (E)</b>.
+          </li>
+          <li><b>Passo C — Digite o Salário Ficha / Vale Ficha (Coluna Verde Y):</b> Digite o valor líquido que veio na ficha e aperte <b>Enter</b>. Dica: ao apertar <b>Enter</b>, o cursor já desce automaticamente para o motorista de baixo na mesma coluna (igualzinho ao Excel!).</li>
+          <li><b>Passo D — Digite o Adiantamento (Z) e Descontos (Colunas Amarelas AL até AO):</b> Preencha o Adiantamento Quinzenal, Farmácia, Plano de Saúde, Vale e Empréstimo CEF. A cada alteração, o robô reajusta as horas automaticamente.</li>
+        </ul>
+      </div>
+
+      <div class="guide-card-full">
+        <h3>3️⃣ Para que servem os botões ⚡, 🎯 e 🔍 no final de cada linha?</h3>
+        <ul class="guide-list">
+          <li><b>Botão Roxo <code>⚡</code> (Calcular Tudo Automático):</b> O robô escolhe a quantidade ideal de <b>Diárias (F)</b> (até o limite de 26 dias) e completa os centavos exatos usando <b>Art. 66 (I ou K)</b>, <b>Adicional Noturno (M)</b> e, quando necessário em salários altos, <b>Horas Extras 50% (O) e 100% (S)</b>.</li>
+          <li><b>Botão <code>🎯</code> (Travar Diárias e Ajustar Só Horas):</b> Imagine que você <b>não quer</b> que o robô mude as Diárias de um motorista (ex.: você mesma digitou manualmente <code>12</code> diárias na coluna F). Basta digitar <code>12</code> em <b>Dias Diária (F)</b> e clicar no botão <b><code>🎯</code></b>! Ele vai respeitar as suas 12 diárias e ajustar <b>somente as horas</b> para zerar a diferença!</li>
+          <li><b>Botão <code>🔍</code> (Raio-X do Motorista):</b> Abre um resumo limpo mostrando todos os proventos em R$, quanto deu de DSR, quanto descontou de INSS e IRRF 2026 e a calculadora de dias proporcionais (<code>/30</code>).</li>
+        </ul>
+      </div>
+
+      <div class="guide-card-full">
+        <h3>4️⃣ Como Salvar e Baixar sua Planilha Pronta para o Excel (.xlsx)</h3>
+        <ul class="guide-list">
+          <li><b>Salvamento Automático:</b> Tudo o que você digita fica salvo automaticamente no seu navegador. Se fechar a página sem querer e abrir de novo, seus números continuam lá!</li>
+          <li><b>Baixar para o Excel (Botão Verde <code>📥 Baixar Excel Pronto (.xlsx)</code>):</b> Quando terminar de preencher, clique em <b>📥 Baixar Excel Pronto (.xlsx)</b> no topo da tela. O sistema gera o arquivo Excel oficial da KRM com todas as 8 abas, mantendo todas as cores, bordas, cabeçalhos e fórmulas originais prontinho para você mandar ou imprimir!</li>
+          <li><b>Como começar o próximo mês (Botão <code>📂 Abrir .xlsx</code>):</b> No mês que vem, se você tiver uma planilha nova no seu computador, é só clicar em <b>📂 Abrir .xlsx</b> no topo, escolher o arquivo do seu PC e o sistema carrega tudo na hora!</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL: CALCULADORA DE DIAS PROPORCIONAIS + RAIO-X DO MOTORISTA -->
+  <div class="modal-backdrop" id="driverModal" onclick="if(event.target===this) closeDriverModal()">
+    <div class="modal-box" id="driverModalContent"></div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer"></div>
+
+  <script>
+    // =========================================================================
+    // 1. PARÂMETROS OFICIAIS DA ABA 'Base Calculos' (KRM 2026)
+    // =========================================================================
+    const KRM_PARAMS = {
+      pisoCarreta: 3454.00,
+      pisoTruck: 2867.00,
+      divisorHoras: 220,
+      diasUteis: 25,
+      domFeriados: 5,
+      valorDiaria: 80.85,
+      deducaoDependente: 189.59,
+      descontoSimplificado: 607.20,
+      irrfIsencaoLimite: 5000.00,
+      irrfTransicaoLimite: 7350.00,
+      irrfCoefA: 978.62,
+      irrfCoefB: 0.133145
+    };
+
+    // Estado Global
+    let APP_STATE = {
+      sheets: [],
+      activeTab: 'krm_mensal',
+      autoSolve: true,
+      rawXlsxBytes: null
+    };
+
+    // =========================================================================
+    // 2. CRIPTOGRAFIA RC4-DROP512 (IDÊNTICA AO POWERSHELL PARA COFRE LGPD)
+    // =========================================================================
+    function krmRc4Bytes(dataBytes, password) {
+      const enc = new TextEncoder();
+      const passBytes = enc.encode("KRM_SALT_2026_" + password);
+      const S = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) S[i] = i;
+      let j = 0;
+      for (let i = 0; i < 256; i++) {
+        j = (j + S[i] + passBytes[i % passBytes.length]) & 0xff;
+        const tmp = S[i]; S[i] = S[j]; S[j] = tmp;
+      }
+      let ii = 0, jj = 0;
+      for (let k = 0; k < 512; k++) {
+        ii = (ii + 1) & 0xff;
+        jj = (jj + S[ii]) & 0xff;
+        const tmp = S[ii]; S[ii] = S[jj]; S[jj] = tmp;
+      }
+      const out = new Uint8Array(dataBytes.length);
+      for (let k = 0; k < dataBytes.length; k++) {
+        ii = (ii + 1) & 0xff;
+        jj = (jj + S[ii]) & 0xff;
+        const tmp = S[ii]; S[ii] = S[jj]; S[jj] = tmp;
+        const rnd = S[(S[ii] + S[jj]) & 0xff];
+        out[k] = dataBytes[k] ^ rnd;
+      }
+      return out;
+    }
+
+    function base64ToUint8(b64) {
+      const bin = atob(b64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function unlockVault(silentPass) {
+      const pass = silentPass || document.getElementById('vaultPassInput').value.trim();
+      if (!window.KRM_VAULT_JSON_B64) {
+        document.getElementById('lockError').textContent = 'Cofre não encontrado. Selecione a planilha .xlsx abaixo.';
+        document.getElementById('lockError').style.display = 'block';
+        return false;
+      }
+      try {
+        const encBytes = base64ToUint8(window.KRM_VAULT_JSON_B64);
+        const decBytes = krmRc4Bytes(encBytes, pass);
+        const decStr = new TextDecoder('utf-8').decode(decBytes);
+        if (!decStr.startsWith('KRM_OK:')) {
+          if (!silentPass) {
+            document.getElementById('lockError').style.display = 'block';
+          }
+          return false;
+        }
+        const jsonPayload = JSON.parse(decStr.slice(7));
+
+        // Descriptografa também o binário .xlsx original para exportação fiel
+        if (window.KRM_VAULT_XLSX_B64) {
+          const encXlsx = base64ToUint8(window.KRM_VAULT_XLSX_B64);
+          APP_STATE.rawXlsxBytes = krmRc4Bytes(encXlsx, pass);
+        }
+
+        localStorage.setItem('krm_fopag_pass', pass);
+        const savedData = localStorage.getItem('krm_fopag_state_v1');
+        if (savedData) {
+          try {
+            APP_STATE.sheets = JSON.parse(savedData);
+          } catch (e) {
+            APP_STATE.sheets = jsonPayload;
+          }
+        } else {
+          APP_STATE.sheets = jsonPayload;
+        }
+
+        // Recalcula todas as linhas carregadas
+        recalcAllRows();
+        document.getElementById('lockScreen').style.display = 'none';
+        renderTabs();
+        renderTable();
+        return true;
+      } catch (err) {
+        console.error(err);
+        if (!silentPass) document.getElementById('lockError').style.display = 'block';
+        return false;
+      }
+    }
+
+    // =========================================================================
+    // 3. MOTOR DE CÁLCULO EXATO DAS FÓRMULAS EXCEL (COLUNAS A ATÉ AQ)
+    // =========================================================================
+    function calcINSS(baseINSS) {
+      if (baseINSS <= 0) return 0;
+      if (baseINSS <= 1621.00) return baseINSS * 0.075;
+      if (baseINSS <= 2902.84) return baseINSS * 0.09 - 24.32;
+      if (baseINSS <= 4354.27) return baseINSS * 0.12 - 111.40;
+      return baseINSS * 0.14 - 198.49;
+    }
+
+    function calcTabelaIRRF(baseIR) {
+      if (baseIR <= 2428.80) return 0;
+      if (baseIR <= 2826.65) return baseIR * 0.075 - 182.16;
+      if (baseIR <= 3751.05) return baseIR * 0.15 - 394.16;
+      if (baseIR <= 4664.68) return baseIR * 0.225 - 675.49;
+      return baseIR * 0.275 - 908.73;
+    }
+
+    function computeRow(d) {
+      const D = Number(d.D) || 0;
+      const E = Number(d.E) || 0;
+      const F = Number(d.F) || 0;
+      const I = Number(d.I) || 0;
+      const K = Number(d.K) || 0;
+      const M = Number(d.M) || 0;
+      const O = Number(d.O) || 0;
+      const Q = Number(d.Q) || 0;
+      const S = Number(d.S) || 0;
+      const Y = Number(d.Y) || 0;
+      const Z = Number(d.Z) || 0;
+      const AD = parseInt(d.AD, 10) || 0;
+      const AL = Number(d.AL) || 0;
+      const AM = Number(d.AM) || 0;
+      const AN = Number(d.AN) || 0;
+      const AO = Number(d.AO) || 0;
+
+      const baseRef = E > 0 ? E : D;
+      const valorHora = baseRef / KRM_PARAMS.divisorHoras;
+
+      // Rubricas Indenizatórias (Fora do INSS e DSR)
+      const G = F * KRM_PARAMS.valorDiaria;
+      const H = I * valorHora * 0.5;
+      const J = K * valorHora * 1.5;
+
+      // Rubricas Tributáveis (Entram no DSR e INSS)
+      const L = M * valorHora * 0.2;
+      const N = O * valorHora * 1.5;
+      const P = Q * valorHora * 0.5;
+      const R = S * valorHora * 2.0;
+
+      // DSR: (E + L + N + P + R) / 25 * 5
+      const T = ((E + L + N + P + R) / KRM_PARAMS.diasUteis) * KRM_PARAMS.domFeriados;
+
+      // Salário Bruto (U)
+      const U = D + E + G + H + J + L + N + P + R + T;
+
+      // Salário Real (X) e FOPAG (V)
+      const X = Y + AL + AM + AN + AO;
+      const V = X + Z;
+
+      // Base INSS (AA) e INSS (AB)
+      const AA = D + E + L + N + R + T;
+      const AB = calcINSS(AA);
+      const AC = AA > 0 ? AB / AA : 0;
+
+      // IRRF 2026 (AE..AK)
+      const AE = AD * KRM_PARAMS.deducaoDependente;
+      const rendTrib = AA - Z;
+      const AF = Math.max(0, rendTrib - AB - AE);
+      const AG = Math.max(0, rendTrib - KRM_PARAMS.descontoSimplificado);
+      const AH = calcTabelaIRRF(AF);
+      const AI = calcTabelaIRRF(AG);
+      const minIR = Math.min(AH, AI);
+
+      let AJ = 0;
+      if (rendTrib <= KRM_PARAMS.irrfIsencaoLimite) {
+        AJ = 0;
+      } else if (rendTrib <= KRM_PARAMS.irrfTransicaoLimite) {
+        AJ = Math.max(0, minIR - (KRM_PARAMS.irrfCoefA - KRM_PARAMS.irrfCoefB * rendTrib));
+      } else {
+        AJ = minIR;
+      }
+      const AK = AJ;
+
+      // Total Descontos (AP) e Total Líquido (AQ)
+      const AP = Z + AB + AJ + AL + AM + AN + AO;
+      const AQ = U - AP;
+
+      // Ajuste (W): Diferença entre o Total Líquido Calculado (AQ) e o Salário Ficha (Y)
+      // Nota: U - Z - AB - X - AK é algebricamente idêntico a AQ - Y!
+      const W = U - Z - AB - X - AK;
+
+      d._calc = {
+        valorHora, G, H, J, L, N, P, R, T, U, V, W, X, AA, AB, AC, AE, AF, AG, AH, AI, AJ, AK, AP, AQ
+      };
+      return d._calc;
+    }
+
+    function recalcAllRows() {
+      for (const sheet of APP_STATE.sheets) {
+        for (const d of sheet.drivers) {
+          computeRow(d);
+        }
+      }
+    }
+
+    // =========================================================================
+    // 4. MOTOR DE ENGENHARIA REVERSA (SOLVER DE DIÁRIAS E HORAS)
+    // =========================================================================
+    function solveDriverRow(d, sheetType, keepDiarias = false) {
+      const D = Number(d.D) || 0;
+      const E = Number(d.E) || 0;
+      const Y = Number(d.Y) || 0;
+      const Z = Number(d.Z) || 0;
+      const AL = Number(d.AL) || 0;
+      const AM = Number(d.AM) || 0;
+      const AN = Number(d.AN) || 0;
+      const AO = Number(d.AO) || 0;
+      const X = Y + AL + AM + AN + AO;
+
+      // Se o motorista está totalmente zerado na folha (ex: demitido/afastado sem ficha e sem descontos)
+      if ((D === 0 && E === 0) || (Y === 0 && Z === 0 && X === 0)) {
+        d.F = 0; d.I = 0; d.K = 0; d.M = 0; d.O = 0; d.Q = 0; d.S = 0;
+        return computeRow(d);
+      }
+
+      const isComissao = E > 0;
+      const baseRef = isComissao ? E : D;
+      const valorHora = baseRef / KRM_PARAMS.divisorHoras;
+
+      // Função auxiliar para testar uma combinação (F, I, K, M, O, S) e retornar o erro |W|
+      function evalCombo(F, I, K, M, O, S) {
+        d.F = F; d.I = I; d.K = K; d.M = M; d.O = O; d.Q = 0; d.S = S;
+        const c = computeRow(d);
+        return c.W;
+      }
+
+      // -----------------------------------------------------------------------
+      // CASO 1: MOTORISTA COMISSIONADO (E > 0)
+      // Usa F (Diárias até 26) + I (Ind. Art 66 Com = 0.5x hora) + M (Noturna)
+      // -----------------------------------------------------------------------
+      if (isComissao) {
+        evalCombo(0, 0, 0, 0, 0, 0);
+        const gap0 = -d._calc.W; // Quanto falta de ganho líquido para atingir X + Z
+        if (gap0 <= 0.005) {
+          return d._calc;
+        }
+
+        let targetF = keepDiarias ? (Number(d.F) || 0) : Math.min(26, Math.max(0, Math.floor(gap0 / KRM_PARAMS.valorDiaria)));
+        // Se sobrar muito pouco para Art. 66 (< R$ 4), reduz 1 diária para ter margem limpa se F > 0
+        if (!keepDiarias && targetF > 0 && (gap0 - targetF * KRM_PARAMS.valorDiaria) < 4) {
+          targetF--;
+        }
+
+        let best = { F: targetF, I: 0, K: 0, M: 0, err: 1e9 };
+        const rateI = valorHora * 0.5;
+
+        // Testa micro-variações de M (Adicional Noturno 0.00 a 2.50) para cravar centavo exato
+        for (let mSteps = 0; mSteps <= 250; mSteps++) {
+          const M = Math.round(mSteps) / 100;
+          evalCombo(targetF, 0, 0, M, 0, 0);
+          const rem = -d._calc.W;
+          if (rem < -0.05) continue;
+          const rawI = Math.max(0, rem / rateI);
+          const I1 = Math.floor(rawI * 100) / 100;
+          const I2 = Math.ceil(rawI * 100) / 100;
+
+          for (const candI of [I1, I2]) {
+            const w = evalCombo(targetF, candI, 0, M, 0, 0);
+            const absErr = Math.abs(w);
+            if (absErr < best.err) {
+              best = { F: targetF, I: candI, K: 0, M, err: absErr };
+              if (absErr < 0.0008) break;
+            }
+          }
+          if (best.err < 0.0008) break;
+        }
+
+        evalCombo(best.F, best.I, 0, best.M, 0, 0);
+        return d._calc;
+      }
+
+      // -----------------------------------------------------------------------
+      // CASO 2: MOTORISTA MENSALISTA / GARANTIA MÍNIMA (D > 0, E = 0)
+      // -----------------------------------------------------------------------
+      evalCombo(0, 0, 0, 0, 0, 0);
+      const gap0 = -d._calc.W;
+      if (gap0 <= 0.005) {
+        return d._calc;
+      }
+
+      const maxDiariasVal = 26 * KRM_PARAMS.valorDiaria; // R$ 2.102,10
+      const rateK = valorHora * 1.5; // Art. 66 GM
+
+      // SUBCASO 2A: Gap cabe dentro das 26 diárias + pequeno resíduo de Art. 66 (K) e Noturna (M)
+      if (gap0 <= maxDiariasVal + 90 || keepDiarias) {
+        let targetF = keepDiarias ? (Number(d.F) || 0) : Math.min(26, Math.max(0, Math.floor(gap0 / KRM_PARAMS.valorDiaria)));
+        if (!keepDiarias && targetF > 0 && (gap0 - targetF * KRM_PARAMS.valorDiaria) < 12) {
+          targetF--;
+        }
+
+        let best = { F: targetF, K: 0, M: 0, O: Number(d.O) || 0, S: Number(d.S) || 0, err: 1e9 };
+        const fixedO = keepDiarias ? (Number(d.O) || 0) : 0;
+        const fixedS = keepDiarias ? (Number(d.S) || 0) : 0;
+
+        // Busca par (K, M) com 2 casas decimais que zera |W|
+        for (let mSteps = 50; mSteps <= 450; mSteps++) {
+          const M = mSteps / 100;
+          evalCombo(targetF, 0, 0, M, fixedO, fixedS);
+          const rem = -d._calc.W;
+          if (rem < 0) continue;
+          const rawK = rem / rateK;
+          const K1 = Math.floor(rawK * 100) / 100;
+          const K2 = Math.ceil(rawK * 100) / 100;
+          for (const candK of [K1, K2]) {
+            const w = evalCombo(targetF, 0, candK, M, fixedO, fixedS);
+            const absErr = Math.abs(w);
+            if (absErr < best.err) {
+              best = { F: targetF, K: candK, M, O: fixedO, S: fixedS, err: absErr };
+              if (absErr < 0.0008) break;
+            }
+          }
+          if (best.err < 0.0008) break;
+        }
+
+        // Caso M=0 seja melhor para resíduos minúsculos
+        if (best.err > 0.002) {
+          for (let mSteps = 0; mSteps < 50; mSteps++) {
+            const M = mSteps / 100;
+            evalCombo(targetF, 0, 0, M, fixedO, fixedS);
+            const rem = Math.max(0, -d._calc.W);
+            const candK = Math.round((rem / rateK) * 100) / 100;
+            const absErr = Math.abs(evalCombo(targetF, 0, candK, M, fixedO, fixedS));
+            if (absErr < best.err) {
+              best = { F: targetF, K: candK, M, O: fixedO, S: fixedS, err: absErr };
+            }
+          }
+        }
+
+        evalCombo(best.F, 0, best.K, best.M, best.O, best.S);
+        return d._calc;
+      }
+
+      // SUBCASO 2B: Mensalista de Alta Renda (Gap supera 26 Diárias = R$ 2.102,10)
+      // Trava F = 26 diárias e distribui HE 50% (O), HE 100% (S), HN 20% (M) e Art. 66 (K) de forma orgânica
+      const targetF = 26;
+      evalCombo(targetF, 0, 0, 0, 0, 0);
+      const excessAfterDiarias = -d._calc.W;
+
+      // Estimativa de horas extras inteiras para O (HE 50%) e S (HE 100%)
+      // Deixamos cerca de R$ 200 a R$ 450 para K (Art. 66) e M (Noturna) fazerem o ajuste fino
+      const targetTaxableNet = Math.max(0, excessAfterDiarias - 280);
+      // Cada unidade de (1.5 * O + 2.0 * S) gera * 1.2 (com DSR) * ~0.86 (líquido INSS) * valorHora
+      const unitNet = valorHora * 1.2 * 0.87;
+      let O = Math.min(20, Math.max(4, Math.round((targetTaxableNet * 0.55) / (unitNet * 1.5))));
+      let S = Math.min(14, Math.max(2, Math.round((targetTaxableNet * 0.45) / (unitNet * 2.0))));
+
+      // Se com O e S passou do ponto, reduz O/S até sobrar uma margem positiva para K e M
+      evalCombo(targetF, 0, 0, 5, O, S);
+      while (d._calc.W > -30 && (O > 0 || S > 0)) {
+        if (O > S) O = Math.max(0, O - 1);
+        else S = Math.max(0, S - 1);
+        evalCombo(targetF, 0, 0, 5, O, S);
+      }
+
+      let best = { F: targetF, K: 0, M: 5, O, S, err: 1e9 };
+      for (let mSteps = 300; mSteps <= 1600; mSteps += 1) {
+        const M = mSteps / 100;
+        evalCombo(targetF, 0, 0, M, O, S);
+        const rem = -d._calc.W;
+        if (rem < 0) continue;
+        const rawK = rem / rateK;
+        const K1 = Math.floor(rawK * 100) / 100;
+        const K2 = Math.ceil(rawK * 100) / 100;
+        for (const candK of [K1, K2]) {
+          const absErr = Math.abs(evalCombo(targetF, 0, candK, M, O, S));
+          if (absErr < best.err) {
+            best = { F: targetF, K: candK, M, O, S, err: absErr };
+            if (absErr < 0.0008) break;
+          }
+        }
+        if (best.err < 0.0008) break;
+      }
+
+      evalCombo(best.F, 0, best.K, best.M, best.O, best.S);
+      return d._calc;
+    }
+
+    // =========================================================================
+    // 5. INTERFACE E RENDERIZAÇÃO DA TABELA
+    // =========================================================================
+    function fmtMoney(v) {
+      const n = Number(v) || 0;
+      return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtNum(v, dec = 2) {
+      const n = Number(v) || 0;
+      if (n === 0) return '0';
+      return n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: dec });
+    }
+
+    function getActiveSheet() {
+      return APP_STATE.sheets.find(s => s.id === APP_STATE.activeTab) || APP_STATE.sheets[0];
+    }
+
+    function renderTabs() {
+      const container = document.getElementById('sheetTabsContainer');
+      let html = '';
+      for (const s of APP_STATE.sheets) {
+        const isActive = s.id === APP_STATE.activeTab;
+        html += `
+          <button class="sheet-tab ${isActive ? 'active' : ''}" onclick="switchTab('${s.id}')">
+            <span>${s.name}</span>
+            <span class="tab-count">${s.drivers.length}</span>
+          </button>
+        `;
+      }
+      html += `
+        <button class="sheet-tab ${APP_STATE.activeTab === 'summary' ? 'active' : ''}" onclick="switchTab('summary')">
+          <span>📊 Resumo Geral</span>
+          <span class="tab-count">133</span>
+        </button>
+        <button class="sheet-tab ${APP_STATE.activeTab === 'params' ? 'active' : ''}" onclick="switchTab('params')">
+          <span>⚙️ Tabelas 2026</span>
+        </button>
+        <button class="sheet-tab ${APP_STATE.activeTab === 'guide' ? 'active' : ''}" onclick="switchTab('guide')">
+          <span>📖 Guia Passo a Passo</span>
+        </button>
+      `;
+      container.innerHTML = html;
+    }
+
+    function toggleQuickBanner() {
+      const el = document.getElementById('quickGuideBanner');
+      if (!el) return;
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function switchTab(tabId) {
+      APP_STATE.activeTab = tabId;
+      renderTabs();
+
+      const sheetView = document.getElementById('sheetView');
+      const summaryView = document.getElementById('summaryView');
+      const paramsView = document.getElementById('paramsView');
+      const guideView = document.getElementById('guideView');
+
+      sheetView.style.display = 'none';
+      summaryView.classList.remove('active');
+      paramsView.classList.remove('active');
+      if (guideView) guideView.classList.remove('active');
+
+      if (tabId === 'summary') {
+        summaryView.classList.add('active');
+        renderSummaryView();
+        updateKpiStrip(null);
+      } else if (tabId === 'params') {
+        paramsView.classList.add('active');
+        updateKpiStrip(null);
+      } else if (tabId === 'guide') {
+        if (guideView) guideView.classList.add('active');
+        updateKpiStrip(null);
+      } else {
+        sheetView.style.display = 'block';
+        renderTable();
+      }
+    }
+
+    function updateKpiStrip(sheet) {
+      const targetSheets = sheet ? [sheet] : APP_STATE.sheets;
+      let count = 0, solved = 0;
+      let sumU = 0, sumG = 0, sumY = 0, sumAQ = 0, sumZ = 0, sumOutros = 0, sumAB = 0, sumAK = 0, sumAbsW = 0;
+
+      for (const s of targetSheets) {
+        for (const d of s.drivers) {
+          const c = d._calc || computeRow(d);
+          count++;
+          if (Math.abs(c.W) <= 0.02) solved++;
+          sumU += c.U;
+          sumG += c.G;
+          sumY += Number(d.Y) || 0;
+          sumAQ += c.AQ;
+          sumZ += Number(d.Z) || 0;
+          sumOutros += (Number(d.AL) || 0) + (Number(d.AM) || 0) + (Number(d.AN) || 0) + (Number(d.AO) || 0);
+          sumAB += c.AB;
+          sumAK += c.AK;
+          sumAbsW += Math.abs(c.W);
+        }
+      }
+
+      document.getElementById('kpiSheetBadge').textContent = sheet ? sheet.name : 'TODAS AS 6 ABAS';
+      document.getElementById('kpiDriversCount').textContent = count;
+      document.getElementById('kpiSolvedCount').textContent = `${solved} de ${count} com Ajuste R$ 0,00`;
+      document.getElementById('kpiTotalBruto').textContent = 'R$ ' + fmtMoney(sumU);
+      document.getElementById('kpiTotalDiarias').textContent = 'Diárias (G): R$ ' + fmtMoney(sumG);
+      document.getElementById('kpiTotalFicha').textContent = 'R$ ' + fmtMoney(sumY);
+      document.getElementById('kpiTotalLiquido').textContent = 'Total Líquido (AQ): R$ ' + fmtMoney(sumAQ);
+      document.getElementById('kpiTotalAdt').textContent = 'R$ ' + fmtMoney(sumZ);
+      document.getElementById('kpiTotalOutrosDesc').textContent = 'Convênios/CEF (AL:AO): R$ ' + fmtMoney(sumOutros);
+      document.getElementById('kpiTotalImpostos').textContent = 'R$ ' + fmtMoney(sumAB + sumAK);
+      document.getElementById('kpiImpostosSplit').textContent = `INSS: R$ ${fmtMoney(sumAB)} | IRRF: R$ ${fmtMoney(sumAK)}`;
+
+      const elAjuste = document.getElementById('kpiTotalAjuste');
+      elAjuste.textContent = 'R$ ' + fmtMoney(sumAbsW);
+      elAjuste.style.color = sumAbsW <= 0.5 ? 'var(--emerald)' : 'var(--amber)';
+    }
+
+    function renderTable() {
+      const sheet = getActiveSheet();
+      if (!sheet) return;
+      updateKpiStrip(sheet);
+
+      const isFull = document.getElementById('viewColumnsMode').value === 'full';
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filter = document.getElementById('filterMode').value;
+
+      const thead = document.getElementById('fopagThead');
+      const tbody = document.getElementById('fopagTbody');
+      const tfoot = document.getElementById('fopagTfoot');
+
+      // Cabeçalho
+      if (!isFull) {
+        thead.innerHTML = `
+          <tr>
+            <th class="col-sticky-1">Cód (A)</th>
+            <th class="col-sticky-2">Motorista (B)</th>
+            <th class="th-input" title="Garantia Mínima / Salário Base (Coluna D)">Garantia Mín (D)</th>
+            <th class="th-input" title="Comissão (Coluna E)">Comissão (E)</th>
+            <th class="th-ficha" title="Valor Vale Ficha / Salário Ficha (Coluna Y) - META LÍQUIDA">🎯 Sal. Ficha (Y)</th>
+            <th class="th-input" title="Adiantamento Quinzenal 40% (Coluna Z)">Adt Quinz (Z)</th>
+            <th class="th-input" title="Dependentes IRRF (Coluna AD)">Dep (AD)</th>
+            <th class="th-desc" title="Desconto Farmácia (Coluna AL)">Farmácia (AL)</th>
+            <th class="th-desc" title="Desconto Plano de Saúde (Coluna AM)">Plano (AM)</th>
+            <th class="th-desc" title="Desconto Vale (Coluna AN)">Vale (AN)</th>
+            <th class="th-desc" title="Empréstimo Caixa / CEF (Coluna AO)">Empr. CEF (AO)</th>
+            <th class="th-solver" title="Dias de Diária R$ 80,85 (Coluna F)">Dias Diária (F)</th>
+            <th class="th-solver" title="Horas Indenização Art. 66 Comissionado 50% (Coluna I)">Ind 66 Com (I)</th>
+            <th class="th-solver" title="Horas Art. 66 Garantia Mínima 150% (Coluna K)">Art 66 GM (K)</th>
+            <th class="th-solver" title="Horas Adicional Noturno 20% (Coluna M)">HN 20% (M)</th>
+            <th class="th-solver" title="Horas Extras 50% (Coluna O)">HE 50% (O)</th>
+            <th class="th-solver" title="Horas Extras 100% (Coluna S)">HE 100% (S)</th>
+            <th title="Salário Bruto Total (Coluna U)">Sal. Bruto (U)</th>
+            <th title="Desconto INSS 2026 (Coluna AB)">INSS (AB)</th>
+            <th title="Imposto de Renda Retido 2026 com Redutor (Coluna AK)">IRRF 26 (AK)</th>
+            <th title="Total Líquido Calculado (Coluna AQ)">Líquido (AQ)</th>
+            <th title="Diferença de Ajuste (Coluna W) = AQ - Y">AJUSTE (W)</th>
+            <th style="text-align:center">Ações</th>
+          </tr>
+        `;
+      } else {
+        thead.innerHTML = `
+          <tr>
+            <th class="col-sticky-1">Cód (A)</th>
+            <th class="col-sticky-2">Motorista (B)</th>
+            <th class="th-input">Gar. Mín (D)</th>
+            <th class="th-input">Comissão (E)</th>
+            <th class="th-solver">Dias (F)</th>
+            <th>Diária R$ (G)</th>
+            <th>R$ Ind 66 (H)</th>
+            <th class="th-solver">Ind 66 (I)</th>
+            <th>R$ Art 66 (J)</th>
+            <th class="th-solver">Art 66 (K)</th>
+            <th>R$ Not (L)</th>
+            <th class="th-solver">HN 20% (M)</th>
+            <th>R$ HE 50% (N)</th>
+            <th class="th-solver">HE 50% (O)</th>
+            <th>R$ HE 100% (R)</th>
+            <th class="th-solver">HE 100% (S)</th>
+            <th>R$ DSR (T)</th>
+            <th>Sal. Bruto (U)</th>
+            <th>FOPAG (V)</th>
+            <th>AJUSTE (W)</th>
+            <th>Sal. Real (X)</th>
+            <th class="th-ficha">🎯 Sal. Ficha (Y)</th>
+            <th class="th-input">Adt Quinz (Z)</th>
+            <th>Base INSS (AA)</th>
+            <th>INSS (AB)</th>
+            <th class="th-input">Dep (AD)</th>
+            <th>IRRF 26 (AK)</th>
+            <th class="th-desc">Farm. (AL)</th>
+            <th class="th-desc">Plano (AM)</th>
+            <th class="th-desc">Vale (AN)</th>
+            <th class="th-desc">CEF (AO)</th>
+            <th>Descontos (AP)</th>
+            <th>Líquido (AQ)</th>
+            <th style="text-align:center">Ações</th>
+          </tr>
+        `;
+      }
+
+      // Filtra motoristas
+      const filtered = sheet.drivers.filter(d => {
+        const c = d._calc || computeRow(d);
+        if (search) {
+          const matchName = (d.name || '').toLowerCase().includes(search);
+          const matchCode = String(d.code || '').toLowerCase().includes(search);
+          if (!matchName && !matchCode) return false;
+        }
+        if (filter === 'unsolved') return Math.abs(c.W) > 0.02;
+        if (filter === 'zero_ficha') return (Number(d.Y) || 0) === 0;
+        if (filter === 'has_irrf') return c.AK > 0.01;
+        if (filter === 'base_gt_ficha') return c.W > 0.05 && d.F === 0 && d.I === 0 && d.K === 0;
+        return true;
+      });
+
+      // Acumuladores de Totais
+      let tot = {
+        D: 0, E: 0, F: 0, G: 0, H: 0, I: 0, J: 0, K: 0, L: 0, M: 0, N: 0, O: 0, R: 0, S: 0,
+        T: 0, U: 0, V: 0, W: 0, X: 0, Y: 0, Z: 0, AA: 0, AB: 0, AK: 0, AL: 0, AM: 0, AN: 0, AO: 0, AP: 0, AQ: 0
+      };
+
+      let rowsHtml = '';
+      for (const d of filtered) {
+        const c = d._calc;
+        tot.D += Number(d.D) || 0;
+        tot.E += Number(d.E) || 0;
+        tot.F += Number(d.F) || 0;
+        tot.G += c.G; tot.H += c.H; tot.I += Number(d.I) || 0;
+        tot.J += c.J; tot.K += Number(d.K) || 0;
+        tot.L += c.L; tot.M += Number(d.M) || 0;
+        tot.N += c.N; tot.O += Number(d.O) || 0;
+        tot.R += c.R; tot.S += Number(d.S) || 0;
+        tot.T += c.T; tot.U += c.U; tot.V += c.V; tot.W += c.W; tot.X += c.X;
+        tot.Y += Number(d.Y) || 0; tot.Z += Number(d.Z) || 0;
+        tot.AA += c.AA; tot.AB += c.AB; tot.AK += c.AK;
+        tot.AL += Number(d.AL) || 0; tot.AM += Number(d.AM) || 0;
+        tot.AN += Number(d.AN) || 0; tot.AO += Number(d.AO) || 0;
+        tot.AP += c.AP; tot.AQ += c.AQ;
+
+        const absW = Math.abs(c.W);
+        let wBadgeClass = 'zero';
+        let wIcon = '✓';
+        if (absW > 0.05) { wBadgeClass = 'err'; wIcon = '⚠️'; }
+        else if (absW > 0.01) { wBadgeClass = 'warn'; wIcon = '~'; }
+
+        const wBadgeHtml = `<span class="badge-w ${wBadgeClass}" id="cell_${sheet.id}_${d.row}_W">${wIcon} ${fmtMoney(c.W)}</span>`;
+
+        if (!isFull) {
+          rowsHtml += `
+            <tr id="row_${sheet.id}_${d.row}">
+              <td class="col-sticky-1">${d.code}</td>
+              <td class="col-sticky-2" title="${d.name}">${d.name}</td>
+              <td>
+                <div class="cell-input-wrap">
+                  <button class="btn-prop" onclick="openDriverModal('${sheet.id}', ${d.row})" title="Calcular dias proporcionais (/30) ou abrir Raio-X">/30</button>
+                  <input type="number" step="0.01" class="cell-input" value="${d.D || ''}" placeholder="0,00"
+                    onchange="onCellEdit('${sheet.id}', ${d.row}, 'D', this.value, true)" />
+                </div>
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input" value="${d.E || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'E', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-ficha" value="${d.Y || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'Y', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input" value="${d.Z || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'Z', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="1" min="0" max="15" class="cell-input input-small" value="${d.AD || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'AD', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-desc" value="${d.AL || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'AL', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-desc" value="${d.AM || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'AM', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-desc" value="${d.AN || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'AN', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-desc" value="${d.AO || ''}" placeholder="0,00"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'AO', this.value, true)" />
+              </td>
+              <td>
+                <input type="number" step="1" min="0" max="31" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_F" value="${d.F || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'F', this.value, false)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_I" value="${d.I || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'I', this.value, false)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_K" value="${d.K || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'K', this.value, false)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_M" value="${d.M || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'M', this.value, false)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_O" value="${d.O || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'O', this.value, false)" />
+              </td>
+              <td>
+                <input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_S" value="${d.S || 0}"
+                  onchange="onCellEdit('${sheet.id}', ${d.row}, 'S', this.value, false)" />
+              </td>
+              <td id="cell_${sheet.id}_${d.row}_U" style="font-weight:700">${fmtMoney(c.U)}</td>
+              <td id="cell_${sheet.id}_${d.row}_AB" style="color:var(--text-secondary)">${fmtMoney(c.AB)}</td>
+              <td id="cell_${sheet.id}_${d.row}_AK" style="color:${c.AK > 0 ? 'var(--amber)' : 'var(--text-muted)'}">${fmtMoney(c.AK)}</td>
+              <td id="cell_${sheet.id}_${d.row}_AQ" style="font-weight:700; color:var(--emerald)">${fmtMoney(c.AQ)}</td>
+              <td>${wBadgeHtml}</td>
+              <td style="text-align:center">
+                <button class="btn btn-sm btn-purple" onclick="solveSingleRow('${sheet.id}', ${d.row}, false)" title="Calcular Diárias + Horas automaticamente para zerar o Ajuste">⚡</button>
+                <button class="btn btn-sm" onclick="solveSingleRow('${sheet.id}', ${d.row}, true)" title="Manter as Diárias (F) atuais e ajustar apenas as Horas (Art. 66 / Noturna)">🎯</button>
+                <button class="btn btn-sm" onclick="openDriverModal('${sheet.id}', ${d.row})" title="Abrir Raio-X completo e Calculadora de Dias Proporcionais">🔍</button>
+              </td>
+            </tr>
+          `;
+        } else {
+          // VISÃO COMPLETA (TODAS AS COLUNAS)
+          rowsHtml += `
+            <tr id="row_${sheet.id}_${d.row}">
+              <td class="col-sticky-1">${d.code}</td>
+              <td class="col-sticky-2" title="${d.name}">${d.name}</td>
+              <td><input type="number" step="0.01" class="cell-input" value="${d.D || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'D', this.value, true)" /></td>
+              <td><input type="number" step="0.01" class="cell-input" value="${d.E || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'E', this.value, true)" /></td>
+              <td><input type="number" step="1" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_F" value="${d.F || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'F', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_G">${fmtMoney(c.G)}</td>
+              <td id="cell_${sheet.id}_${d.row}_H">${fmtMoney(c.H)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_I" value="${d.I || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'I', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_J">${fmtMoney(c.J)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_K" value="${d.K || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'K', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_L">${fmtMoney(c.L)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_M" value="${d.M || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'M', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_N">${fmtMoney(c.N)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_O" value="${d.O || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'O', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_R">${fmtMoney(c.R)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-solver" id="in_${sheet.id}_${d.row}_S" value="${d.S || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'S', this.value, false)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_T">${fmtMoney(c.T)}</td>
+              <td id="cell_${sheet.id}_${d.row}_U" style="font-weight:700">${fmtMoney(c.U)}</td>
+              <td id="cell_${sheet.id}_${d.row}_V">${fmtMoney(c.V)}</td>
+              <td>${wBadgeHtml}</td>
+              <td id="cell_${sheet.id}_${d.row}_X">${fmtMoney(c.X)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-ficha" value="${d.Y || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'Y', this.value, true)" /></td>
+              <td><input type="number" step="0.01" class="cell-input" value="${d.Z || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'Z', this.value, true)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_AA">${fmtMoney(c.AA)}</td>
+              <td id="cell_${sheet.id}_${d.row}_AB">${fmtMoney(c.AB)}</td>
+              <td><input type="number" step="1" class="cell-input input-small" value="${d.AD || 0}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'AD', this.value, true)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_AK">${fmtMoney(c.AK)}</td>
+              <td><input type="number" step="0.01" class="cell-input input-desc" value="${d.AL || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'AL', this.value, true)" /></td>
+              <td><input type="number" step="0.01" class="cell-input input-desc" value="${d.AM || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'AM', this.value, true)" /></td>
+              <td><input type="number" step="0.01" class="cell-input input-desc" value="${d.AN || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'AN', this.value, true)" /></td>
+              <td><input type="number" step="0.01" class="cell-input input-desc" value="${d.AO || ''}" onchange="onCellEdit('${sheet.id}', ${d.row}, 'AO', this.value, true)" /></td>
+              <td id="cell_${sheet.id}_${d.row}_AP">${fmtMoney(c.AP)}</td>
+              <td id="cell_${sheet.id}_${d.row}_AQ" style="font-weight:700; color:var(--emerald)">${fmtMoney(c.AQ)}</td>
+              <td style="text-align:center">
+                <button class="btn btn-sm btn-purple" onclick="solveSingleRow('${sheet.id}', ${d.row}, false)">⚡</button>
+                <button class="btn btn-sm" onclick="openDriverModal('${sheet.id}', ${d.row})">🔍</button>
+              </td>
+            </tr>
+          `;
+        }
+      }
+
+      tbody.innerHTML = rowsHtml;
+
+      // Rodapé de Totais
+      if (!isFull) {
+        tfoot.innerHTML = `
+          <tr>
+            <td class="col-sticky-1">TOT</td>
+            <td class="col-sticky-2">TOTAIS (${filtered.length} motoristas)</td>
+            <td>${fmtMoney(tot.D)}</td>
+            <td>${fmtMoney(tot.E)}</td>
+            <td style="color:var(--emerald)">${fmtMoney(tot.Y)}</td>
+            <td>${fmtMoney(tot.Z)}</td>
+            <td>-</td>
+            <td>${fmtMoney(tot.AL)}</td>
+            <td>${fmtMoney(tot.AM)}</td>
+            <td>${fmtMoney(tot.AN)}</td>
+            <td>${fmtMoney(tot.AO)}</td>
+            <td>${fmtNum(tot.F, 0)} d</td>
+            <td>${fmtNum(tot.I)} h</td>
+            <td>${fmtNum(tot.K)} h</td>
+            <td>${fmtNum(tot.M)} h</td>
+            <td>${fmtNum(tot.O)} h</td>
+            <td>${fmtNum(tot.S)} h</td>
+            <td>${fmtMoney(tot.U)}</td>
+            <td>${fmtMoney(tot.AB)}</td>
+            <td>${fmtMoney(tot.AK)}</td>
+            <td style="color:var(--emerald)">${fmtMoney(tot.AQ)}</td>
+            <td>${fmtMoney(tot.W)}</td>
+            <td></td>
+          </tr>
+        `;
+      } else {
+        tfoot.innerHTML = `
+          <tr>
+            <td class="col-sticky-1">TOT</td>
+            <td class="col-sticky-2">TOTAIS (${filtered.length} motoristas)</td>
+            <td>${fmtMoney(tot.D)}</td>
+            <td>${fmtMoney(tot.E)}</td>
+            <td>${fmtNum(tot.F, 0)}</td>
+            <td>${fmtMoney(tot.G)}</td>
+            <td>${fmtMoney(tot.H)}</td>
+            <td>${fmtNum(tot.I)}</td>
+            <td>${fmtMoney(tot.J)}</td>
+            <td>${fmtNum(tot.K)}</td>
+            <td>${fmtMoney(tot.L)}</td>
+            <td>${fmtNum(tot.M)}</td>
+            <td>${fmtMoney(tot.N)}</td>
+            <td>${fmtNum(tot.O)}</td>
+            <td>${fmtMoney(tot.R)}</td>
+            <td>${fmtNum(tot.S)}</td>
+            <td>${fmtMoney(tot.T)}</td>
+            <td>${fmtMoney(tot.U)}</td>
+            <td>${fmtMoney(tot.V)}</td>
+            <td>${fmtMoney(tot.W)}</td>
+            <td>${fmtMoney(tot.X)}</td>
+            <td style="color:var(--emerald)">${fmtMoney(tot.Y)}</td>
+            <td>${fmtMoney(tot.Z)}</td>
+            <td>${fmtMoney(tot.AA)}</td>
+            <td>${fmtMoney(tot.AB)}</td>
+            <td>-</td>
+            <td>${fmtMoney(tot.AK)}</td>
+            <td>${fmtMoney(tot.AL)}</td>
+            <td>${fmtMoney(tot.AM)}</td>
+            <td>${fmtMoney(tot.AN)}</td>
+            <td>${fmtMoney(tot.AO)}</td>
+            <td>${fmtMoney(tot.AP)}</td>
+            <td style="color:var(--emerald)">${fmtMoney(tot.AQ)}</td>
+            <td></td>
+          </tr>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // 6. EDIÇÃO DE CÉLULAS E ACIONAMENTO AUTOMÁTICO DO SOLVER
+    // =========================================================================
+    function onCellEdit(sheetId, rowNum, field, rawVal, isTargetInput) {
+      const sheet = APP_STATE.sheets.find(s => s.id === sheetId);
+      if (!sheet) return;
+      const d = sheet.drivers.find(x => x.row === rowNum);
+      if (!d) return;
+
+      const num = parseFloat(String(rawVal).replace(',', '.')) || 0;
+      d[field] = field === 'AD' ? Math.max(0, parseInt(num, 10) || 0) : Math.max(0, num);
+
+      // Se a Natani editou Salário/Comissão/Ficha/Adiantamento/Descontos e o Auto-Completar está ligado:
+      if (isTargetInput && APP_STATE.autoSolve) {
+        solveDriverRow(d, sheet.type, false);
+      } else {
+        computeRow(d);
+      }
+
+      saveState();
+      renderTable();
+    }
+
+    function solveSingleRow(sheetId, rowNum, keepDiarias = false) {
+      const sheet = APP_STATE.sheets.find(s => s.id === sheetId);
+      if (!sheet) return;
+      const d = sheet.drivers.find(x => x.row === rowNum);
+      if (!d) return;
+
+      solveDriverRow(d, sheet.type, keepDiarias);
+      saveState();
+      renderTable();
+      showToast(`✅ ${d.name}: Ajuste cravado em R$ ${fmtMoney(d._calc.W)}!`);
+    }
+
+    function solveCurrentSheet() {
+      const sheet = getActiveSheet();
+      if (!sheet) return;
+      let count = 0;
+      for (const d of sheet.drivers) {
+        solveDriverRow(d, sheet.type, false);
+        count++;
+      }
+      saveState();
+      renderTable();
+      showToast(`🎯 Aba ${sheet.name}: ${count} motoristas calculados e zerados!`);
+    }
+
+    function solveAllSheets() {
+      let total = 0;
+      for (const s of APP_STATE.sheets) {
+        for (const d of s.drivers) {
+          solveDriverRow(d, s.type, false);
+          total++;
+        }
+      }
+      saveState();
+      if (APP_STATE.activeTab === 'summary') renderSummaryView();
+      else renderTable();
+      showToast(`🚀 Sucesso! Todos os ${total} motoristas das 6 abas foram calculados automaticamente!`);
+    }
+
+    function toggleAutoSolve(checked) {
+      APP_STATE.autoSolve = checked;
+      showToast(checked
+        ? '⚡ Auto-Completar ativado: ao digitar o Vale Ficha, as horas serão preenchidas sozinhas!'
+        : '✋ Modo manual: edite diárias e horas livremente.');
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('krm_fopag_state_v1', JSON.stringify(APP_STATE.sheets));
+        const el = document.getElementById('saveStatusIndicator');
+        if (el) {
+          el.textContent = '✓ Alterações salvas (' + new Date().toLocaleTimeString('pt-BR') + ')';
+        }
+      } catch (e) {}
+    }
+
+    function resetToOriginal() {
+      if (!confirm('Deseja restaurar todos os valores originais da planilha KRM e descartar as edições feitas no navegador?')) return;
+      localStorage.removeItem('krm_fopag_state_v1');
+      const pass = localStorage.getItem('krm_fopag_pass') || 'krm2026';
+      unlockVault(pass);
+      showToast('🔄 Planilha restaurada aos valores originais!');
+    }
+
+    // =========================================================================
+    // 7. MODAL DE RAIO-X DO MOTORISTA & CALCULADORA DE DIAS PROPORCIONAIS (/30)
+    // =========================================================================
+    function openDriverModal(sheetId, rowNum) {
+      const sheet = APP_STATE.sheets.find(s => s.id === sheetId);
+      if (!sheet) return;
+      const d = sheet.drivers.find(x => x.row === rowNum);
+      if (!d) return;
+      const c = d._calc || computeRow(d);
+
+      const estDays = Math.round(((Number(d.D) || KRM_PARAMS.pisoCarreta) / KRM_PARAMS.pisoCarreta) * 30);
+      const modal = document.getElementById('driverModal');
+      const box = document.getElementById('driverModalContent');
+
+      box.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">🔍 ${d.code} — ${d.name}</div>
+            <div style="font-size:12px; color:var(--text-muted)">Aba: ${sheet.name} | Linha Excel: ${d.row}</div>
+          </div>
+          <button class="btn btn-sm" onclick="closeDriverModal()">✕ Fechar</button>
+        </div>
+
+        <!-- CALCULADORA DE DIAS PROPORCIONAIS -->
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div style="font-weight:700; font-size:12.5px; margin-bottom:8px; color:var(--primary)">
+            📅 Calculadora Rápida de Dias Trabalhados / Proporcional (Férias, Admissão ou Atestado)
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <label style="font-size:12px;">Piso Base:
+              <select id="propPisoSelect" class="filter-select" onchange="updatePropPreview()">
+                <option value="3454">Carreta (R$ 3.454,00)</option>
+                <option value="2867">Truck (R$ 2.867,00)</option>
+              </select>
+            </label>
+            <label style="font-size:12px;">Dias Trabalhados (de 30):
+              <input type="number" id="propDaysInput" min="0" max="30" step="1" value="${Math.min(30, Math.max(1, estDays))}"
+                class="cell-input input-small" style="width:60px" oninput="updatePropPreview()" />
+            </label>
+            <span id="propResultPreview" style="font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--emerald)">
+              = R$ ${fmtMoney((KRM_PARAMS.pisoCarreta / 30) * Math.min(30, Math.max(1, estDays)))}
+            </span>
+            <button class="btn btn-primary btn-sm" onclick="applyProportionalDays('${sheet.id}', ${d.row})">
+              ✓ Aplicar na Garantia Mínima (D)
+            </button>
+          </div>
+        </div>
+
+        <!-- RESUMO DE ENGENHARIA REVERSA -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="summary-card" style="padding:14px;">
+            <h3 style="font-size:13px; color:var(--emerald)">1. Proventos & Horas Calculadas</h3>
+            <div class="stat-row"><span>Garantia Mín (D) / Comissão (E)</span><span>R$ ${fmtMoney((d.D||0) + (d.E||0))}</span></div>
+            <div class="stat-row"><span>Diárias (${d.F} dias × R$ 80,85) (G)</span><span>R$ ${fmtMoney(c.G)}</span></div>
+            <div class="stat-row"><span>Ind. Art 66 Com (${d.I}h) (H)</span><span>R$ ${fmtMoney(c.H)}</span></div>
+            <div class="stat-row"><span>Art. 66 Gar. Mín (${d.K}h) (J)</span><span>R$ ${fmtMoney(c.J)}</span></div>
+            <div class="stat-row"><span>Adic. Noturno 20% (${d.M}h) (L)</span><span>R$ ${fmtMoney(c.L)}</span></div>
+            <div class="stat-row"><span>Horas Extras 50% (${d.O}h) (N)</span><span>R$ ${fmtMoney(c.N)}</span></div>
+            <div class="stat-row"><span>Horas Extras 100% (${d.S}h) (R)</span><span>R$ ${fmtMoney(c.R)}</span></div>
+            <div class="stat-row"><span>Reflexo DSR (T)</span><span>R$ ${fmtMoney(c.T)}</span></div>
+            <div class="stat-row" style="font-weight:800; color:var(--text-main)"><span>SALÁRIO BRUTO (U)</span><span>R$ ${fmtMoney(c.U)}</span></div>
+          </div>
+
+          <div class="summary-card" style="padding:14px;">
+            <h3 style="font-size:13px; color:var(--amber)">2. Descontos, Impostos & Fechamento</h3>
+            <div class="stat-row"><span>Base de Cálculo INSS (AA)</span><span>R$ ${fmtMoney(c.AA)}</span></div>
+            <div class="stat-row"><span>INSS Retido 2026 (AB)</span><span>R$ ${fmtMoney(c.AB)}</span></div>
+            <div class="stat-row"><span>IRRF 2026 c/ Redutor (AK)</span><span>R$ ${fmtMoney(c.AK)}</span></div>
+            <div class="stat-row"><span>Adiantamento Quinzenal (Z)</span><span>R$ ${fmtMoney(d.Z)}</span></div>
+            <div class="stat-row"><span>Farmácia + Plano + Vale + CEF</span><span>R$ ${fmtMoney((d.AL||0)+(d.AM||0)+(d.AN||0)+(d.AO||0))}</span></div>
+            <div class="stat-row"><span>Total de Descontos (AP)</span><span>R$ ${fmtMoney(c.AP)}</span></div>
+            <div class="stat-row" style="color:var(--emerald); font-weight:800"><span>TOTAL LÍQUIDO (AQ)</span><span>R$ ${fmtMoney(c.AQ)}</span></div>
+            <div class="stat-row" style="color:var(--primary); font-weight:800"><span>META VALE FICHA (Y)</span><span>R$ ${fmtMoney(d.Y)}</span></div>
+            <div class="stat-row"><span>DIFERENÇA / AJUSTE (W)</span><span>R$ ${fmtMoney(c.W)}</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:8px;">
+          <button class="btn" onclick="solveSingleRow('${sheet.id}', ${d.row}, true); openDriverModal('${sheet.id}', ${d.row})">
+            🎯 Ajustar Só Horas (Manter ${d.F} Diárias)
+          </button>
+          <button class="btn btn-purple" onclick="solveSingleRow('${sheet.id}', ${d.row}, false); openDriverModal('${sheet.id}', ${d.row})">
+            ⚡ Recalcular Diárias + Horas Automaticamente
+          </button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function updatePropPreview() {
+      const piso = parseFloat(document.getElementById('propPisoSelect').value) || 3454;
+      const days = Math.min(30, Math.max(0, parseInt(document.getElementById('propDaysInput').value, 10) || 0));
+      const val = Math.round(((piso / 30) * days) * 100) / 100;
+      document.getElementById('propResultPreview').textContent = '= R$ ' + fmtMoney(val);
+    }
+
+    function applyProportionalDays(sheetId, rowNum) {
+      const piso = parseFloat(document.getElementById('propPisoSelect').value) || 3454;
+      const days = Math.min(30, Math.max(0, parseInt(document.getElementById('propDaysInput').value, 10) || 0));
+      const val = Math.round(((piso / 30) * days) * 100) / 100;
+      onCellEdit(sheetId, rowNum, 'D', val, true);
+      openDriverModal(sheetId, rowNum);
+      showToast(`📅 Garantia Mínima ajustada para ${days}/30 dias (R$ ${fmtMoney(val)})!`);
+    }
+
+    function closeDriverModal() {
+      document.getElementById('driverModal').classList.remove('open');
+    }
+
+    // Modal para adicionar novo motorista
+    function openNewDriverModal() {
+      const sheet = getActiveSheet();
+      if (!sheet) return;
+      const modal = document.getElementById('driverModal');
+      const box = document.getElementById('driverModalContent');
+      box.innerHTML = `
+        <div class="modal-header">
+          <div class="modal-title">➕ Adicionar Motorista em ${sheet.name}</div>
+          <button class="btn btn-sm" onclick="closeDriverModal()">✕ Fechar</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-muted)">Código (Coluna A)</label>
+            <input type="text" id="newDrvCode" class="cell-input" style="width:100%; text-align:left; margin-top:4px;" placeholder="Ex: 1120" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-muted)">Nome Completo (Coluna B)</label>
+            <input type="text" id="newDrvName" class="cell-input" style="width:100%; text-align:left; margin-top:4px;" placeholder="NOME DO MOTORISTA" />
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-muted)">Garantia Mínima (D)</label>
+            <input type="number" step="0.01" id="newDrvD" class="cell-input" style="width:100%; margin-top:4px;" value="${sheet.type === 'MENSAL' ? '3454.00' : '0'}" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-muted)">Comissão (E)</label>
+            <input type="number" step="0.01" id="newDrvE" class="cell-input" style="width:100%; margin-top:4px;" value="0" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--emerald)">Salário Ficha (Y)</label>
+            <input type="number" step="0.01" id="newDrvY" class="cell-input input-ficha" style="width:100%; margin-top:4px;" placeholder="0,00" />
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button class="btn" onclick="closeDriverModal()">Cancelar</button>
+          <button class="btn btn-emerald" onclick="confirmAddDriver()">✓ Cadastrar e Calcular</button>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function confirmAddDriver() {
+      const sheet = getActiveSheet();
+      const code = document.getElementById('newDrvCode').value.trim() || 'NOVO';
+      const name = document.getElementById('newDrvName').value.trim().toUpperCase();
+      if (!name) { alert('Informe o nome do motorista.'); return; }
+      const D = parseFloat(document.getElementById('newDrvD').value) || 0;
+      const E = parseFloat(document.getElementById('newDrvE').value) || 0;
+      const Y = parseFloat(document.getElementById('newDrvY').value) || 0;
+
+      const maxRow = sheet.drivers.reduce((m, x) => Math.max(m, x.row), 2);
+      const newDrv = {
+        row: maxRow + 1, code, name, role: '',
+        D, E, F: 0, I: 0, K: 0, M: 0, O: 0, Q: 0, S: 0, Y, Z: 0, AD: 0, AL: 0, AM: 0, AN: 0, AO: 0
+      };
+      solveDriverRow(newDrv, sheet.type, false);
+      sheet.drivers.push(newDrv);
+      saveState();
+      closeDriverModal();
+      renderTabs();
+      renderTable();
+      showToast(`➕ Motorista ${name} adicionado com sucesso!`);
+    }
+
+    // =========================================================================
+    // 8. RESUMO GERAL CONSOLIDADO
+    // =========================================================================
+    function renderSummaryView() {
+      const container = document.getElementById('summaryGridContainer');
+      let html = '';
+      for (const s of APP_STATE.sheets) {
+        let sumU = 0, sumY = 0, sumZ = 0, sumAB = 0, sumAK = 0, sumAQ = 0, sumW = 0, solved = 0;
+        for (const d of s.drivers) {
+          const c = d._calc || computeRow(d);
+          sumU += c.U; sumY += Number(d.Y) || 0; sumZ += Number(d.Z) || 0;
+          sumAB += c.AB; sumAK += c.AK; sumAQ += c.AQ; sumW += Math.abs(c.W);
+          if (Math.abs(c.W) <= 0.02) solved++;
+        }
+        html += `
+          <div class="summary-card">
+            <h3>
+              <span>${s.name}</span>
+              <span class="pill-tag">${solved}/${s.drivers.length} Zerados</span>
+            </h3>
+            <div class="stat-row"><span>Salário Bruto (U)</span><span>R$ ${fmtMoney(sumU)}</span></div>
+            <div class="stat-row"><span>Meta Salário Ficha (Y)</span><span style="color:var(--emerald)">R$ ${fmtMoney(sumY)}</span></div>
+            <div class="stat-row"><span>Total Líquido Calculado (AQ)</span><span>R$ ${fmtMoney(sumAQ)}</span></div>
+            <div class="stat-row"><span>Adiantamento Quinzenal (Z)</span><span>R$ ${fmtMoney(sumZ)}</span></div>
+            <div class="stat-row"><span>INSS (AB) + IRRF 2026 (AK)</span><span>R$ ${fmtMoney(sumAB + sumAK)}</span></div>
+            <div class="stat-row"><span>Soma de Diferenças |W|</span><span style="color:${sumW <= 0.2 ? 'var(--emerald)' : 'var(--amber)'}">R$ ${fmtMoney(sumW)}</span></div>
+            <div style="margin-top:12px; text-align:right;">
+              <button class="btn btn-sm btn-primary" onclick="switchTab('${s.id}')">Abrir Aba →</button>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    // =========================================================================
+    // 9. LEITOR E EXPORTADOR NATIVO DE EXCEL (.XLSX) NO NAVEGADOR (ZIP + XML)
+    // =========================================================================
+    async function decompressRawDeflate(compBytes) {
+      const ds = new DecompressionStream('deflate-raw');
+      const writer = ds.writable.getWriter();
+      writer.write(compBytes);
+      writer.close();
+      return new Uint8Array(await new Response(ds.readable).arrayBuffer());
+    }
+
+    async function compressRawDeflate(plainBytes) {
+      const cs = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      writer.write(plainBytes);
+      writer.close();
+      return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    }
+
+    // CRC32 para reconstrução do arquivo .xlsx (ZIP)
+    const CRC_TABLE = (() => {
+      const t = new Uint32Array(256);
+      for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[i] = c >>> 0;
+      }
+      return t;
+    })();
+
+    function crc32(bytes) {
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) {
+        crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    // Lê todas as entradas de um arquivo ZIP (.xlsx) em memória
+    async function parseZipEntries(zipBytes) {
+      const view = new DataView(zipBytes.buffer, zipBytes.byteOffset, zipBytes.byteLength);
+      // Procura End of Central Directory (0x06054b50)
+      let eocdPos = zipBytes.length - 22;
+      while (eocdPos >= 0 && view.getUint32(eocdPos, true) !== 0x06054b50) eocdPos--;
+      if (eocdPos < 0) throw new Error('Arquivo .xlsx inválido (EOCD não encontrado)');
+
+      const totalEntries = view.getUint16(eocdPos + 8, true);
+      const cdOffset = view.getUint32(eocdPos + 16, true);
+
+      const entries = [];
+      let ptr = cdOffset;
+      const dec = new TextDecoder('utf-8');
+
+      for (let i = 0; i < totalEntries; i++) {
+        if (view.getUint32(ptr, true) !== 0x02014b50) break;
+        const method = view.getUint16(ptr + 10, true);
+        const crc = view.getUint32(ptr + 16, true);
+        const compSize = view.getUint32(ptr + 20, true);
+        const uncompSize = view.getUint32(ptr + 24, true);
+        const nameLen = view.getUint16(ptr + 28, true);
+        const extraLen = view.getUint16(ptr + 30, true);
+        const commentLen = view.getUint16(ptr + 32, true);
+        const localHeaderOffset = view.getUint32(ptr + 42, true);
+
+        const name = dec.decode(zipBytes.subarray(ptr + 46, ptr + 46 + nameLen));
+
+        // Lê dados do Local File Header
+        const lfhNameLen = view.getUint16(localHeaderOffset + 26, true);
+        const lfhExtraLen = view.getUint16(localHeaderOffset + 28, true);
+        const dataStart = localHeaderOffset + 30 + lfhNameLen + lfhExtraLen;
+        const rawCompData = zipBytes.subarray(dataStart, dataStart + compSize);
+
+        entries.push({ name, method, crc, compSize, uncompSize, rawCompData });
+        ptr += 46 + nameLen + extraLen + commentLen;
+      }
+      return entries;
+    }
+
+    // Reconstrói um arquivo ZIP (.xlsx) válido a partir das entradas
+    function buildZipFile(entries) {
+      const enc = new TextEncoder();
+      const localParts = [];
+      const cdParts = [];
+      let offset = 0;
+
+      for (const e of entries) {
+        const nameBytes = enc.encode(e.name);
+        const lfh = new Uint8Array(30 + nameBytes.length);
+        const lfhView = new DataView(lfh.buffer);
+        lfhView.setUint32(0, 0x04034b50, true);
+        lfhView.setUint16(4, 20, true);
+        lfhView.setUint16(6, 0x0800, true); // UTF-8 flag
+        lfhView.setUint16(8, e.method, true);
+        lfhView.setUint16(10, 0, true);
+        lfhView.setUint16(12, 0x5421, true);
+        lfhView.setUint32(14, e.crc, true);
+        lfhView.setUint32(18, e.rawCompData.length, true);
+        lfhView.setUint32(22, e.uncompSize, true);
+        lfhView.setUint16(26, nameBytes.length, true);
+        lfhView.setUint16(28, 0, true);
+        lfh.set(nameBytes, 30);
+
+        const cd = new Uint8Array(46 + nameBytes.length);
+        const cdView = new DataView(cd.buffer);
+        cdView.setUint32(0, 0x02014b50, true);
+        cdView.setUint16(4, 20, true);
+        cdView.setUint16(6, 20, true);
+        cdView.setUint16(8, 0x0800, true);
+        cdView.setUint16(10, e.method, true);
+        cdView.setUint16(12, 0, true);
+        cdView.setUint16(14, 0x5421, true);
+        cdView.setUint32(16, e.crc, true);
+        cdView.setUint32(20, e.rawCompData.length, true);
+        cdView.setUint32(24, e.uncompSize, true);
+        cdView.setUint16(28, nameBytes.length, true);
+        cdView.setUint16(30, 0, true);
+        cdView.setUint16(32, 0, true);
+        cdView.setUint16(34, 0, true);
+        cdView.setUint16(36, 0, true);
+        cdView.setUint32(38, 0, true);
+        cdView.setUint32(42, offset, true);
+        cd.set(nameBytes, 46);
+
+        localParts.push(lfh, e.rawCompData);
+        cdParts.push(cd);
+        offset += lfh.length + e.rawCompData.length;
+      }
+
+      const cdSize = cdParts.reduce((a, b) => a + b.length, 0);
+      const eocd = new Uint8Array(22);
+      const eocdView = new DataView(eocd.buffer);
+      eocdView.setUint32(0, 0x06054b50, true);
+      eocdView.setUint16(8, entries.length, true);
+      eocdView.setUint16(10, entries.length, true);
+      eocdView.setUint32(12, cdSize, true);
+      eocdView.setUint32(16, offset, true);
+
+      const totalLen = offset + cdSize + 22;
+      const out = new Uint8Array(totalLen);
+      let pos = 0;
+      for (const p of localParts) { out.set(p, pos); pos += p.length; }
+      for (const p of cdParts) { out.set(p, pos); pos += p.length; }
+      out.set(eocd, pos);
+      return out;
+    }
+
+    // Atualiza o XML de uma aba mantendo todas as fórmulas, estilos e formatações
+    function patchWorksheetXml(xmlStr, sheet) {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlStr, 'application/xml');
+      const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+      const rows = xmlDoc.getElementsByTagName('row');
+      const rowMap = new Map();
+      for (let i = 0; i < rows.length; i++) {
+        rowMap.set(parseInt(rows[i].getAttribute('r'), 10), rows[i]);
+      }
+
+      function setCellValue(rowEl, rIdx, col, val, isFormulaCell = false) {
+        const ref = col + rIdx;
+        const cells = rowEl.getElementsByTagName('c');
+        let cellEl = null;
+        for (let i = 0; i < cells.length; i++) {
+          if (cells[i].getAttribute('r') === ref) {
+            cellEl = cells[i];
+            break;
+          }
+        }
+        if (!cellEl) return;
+
+        // Corrige a fórmula da coluna W nas abas MENSAL (que subtraía AH em vez de AK)
+        if (col === 'W') {
+          const fEl = cellEl.getElementsByTagName('f')[0];
+          if (fEl && fEl.textContent) {
+            fEl.textContent = `U${rIdx}-Z${rIdx}-AB${rIdx}-X${rIdx}-AK${rIdx}`;
+          }
+        }
+
+        let vEl = cellEl.getElementsByTagName('v')[0];
+        const numVal = Number(val) || 0;
+
+        if (!isFormulaCell && numVal === 0 && ['E', 'I', 'Q', 'AL', 'AM', 'AN', 'AO'].includes(col)) {
+          if (vEl) cellEl.removeChild(vEl);
+          return;
+        }
+
+        if (!vEl) {
+          vEl = xmlDoc.createElementNS(ns, 'v');
+          cellEl.appendChild(vEl);
+        }
+        vEl.textContent = String(Math.round(numVal * 1000000) / 1000000);
+      }
+
+      for (const d of sheet.drivers) {
+        const rEl = rowMap.get(d.row);
+        if (!rEl) continue;
+        const c = d._calc || computeRow(d);
+
+        // Inputs editáveis
+        setCellValue(rEl, d.row, 'D', d.D, false);
+        setCellValue(rEl, d.row, 'E', d.E, false);
+        setCellValue(rEl, d.row, 'F', d.F, false);
+        setCellValue(rEl, d.row, 'I', d.I, false);
+        setCellValue(rEl, d.row, 'K', d.K, false);
+        setCellValue(rEl, d.row, 'M', d.M, false);
+        setCellValue(rEl, d.row, 'O', d.O, false);
+        setCellValue(rEl, d.row, 'Q', d.Q, false);
+        setCellValue(rEl, d.row, 'S', d.S, false);
+        setCellValue(rEl, d.row, 'Y', d.Y, false);
+        setCellValue(rEl, d.row, 'Z', d.Z, false);
+        setCellValue(rEl, d.row, 'AD', d.AD, false);
+        setCellValue(rEl, d.row, 'AL', d.AL, false);
+        setCellValue(rEl, d.row, 'AM', d.AM, false);
+        setCellValue(rEl, d.row, 'AN', d.AN, false);
+        setCellValue(rEl, d.row, 'AO', d.AO, false);
+
+        // Valores calculados das fórmulas (para abrir já atualizado em qualquer visualizador)
+        setCellValue(rEl, d.row, 'G', c.G, true);
+        setCellValue(rEl, d.row, 'H', c.H, true);
+        setCellValue(rEl, d.row, 'J', c.J, true);
+        setCellValue(rEl, d.row, 'L', c.L, true);
+        setCellValue(rEl, d.row, 'N', c.N, true);
+        setCellValue(rEl, d.row, 'P', c.P, true);
+        setCellValue(rEl, d.row, 'R', c.R, true);
+        setCellValue(rEl, d.row, 'T', c.T, true);
+        setCellValue(rEl, d.row, 'U', c.U, true);
+        setCellValue(rEl, d.row, 'V', c.V, true);
+        setCellValue(rEl, d.row, 'W', c.W, true);
+        setCellValue(rEl, d.row, 'X', c.X, true);
+        setCellValue(rEl, d.row, 'AA', c.AA, true);
+        setCellValue(rEl, d.row, 'AB', c.AB, true);
+        setCellValue(rEl, d.row, 'AC', c.AC, true);
+        setCellValue(rEl, d.row, 'AE', c.AE, true);
+        setCellValue(rEl, d.row, 'AF', c.AF, true);
+        setCellValue(rEl, d.row, 'AG', c.AG, true);
+        setCellValue(rEl, d.row, 'AH', c.AH, true);
+        setCellValue(rEl, d.row, 'AI', c.AI, true);
+        setCellValue(rEl, d.row, 'AJ', c.AJ, true);
+        setCellValue(rEl, d.row, 'AK', c.AK, true);
+        setCellValue(rEl, d.row, 'AP', c.AP, true);
+        setCellValue(rEl, d.row, 'AQ', c.AQ, true);
+      }
+
+      return new XMLSerializer().serializeToString(xmlDoc);
+    }
+
+    async function exportReadyXlsx() {
+      if (!APP_STATE.rawXlsxBytes) {
+        alert('O template Excel não está carregado em memória. Por favor, selecione a planilha .xlsx primeiro.');
+        return;
+      }
+      try {
+        showToast('⏳ Gerando planilha Excel (.xlsx) com todas as fórmulas e formatações...');
+        const entries = await parseZipEntries(APP_STATE.rawXlsxBytes);
+        const dec = new TextDecoder('utf-8');
+        const enc = new TextEncoder();
+
+        for (const entry of entries) {
+          const matchedSheet = APP_STATE.sheets.find(s => s.entry === entry.name);
+          if (matchedSheet) {
+            const plainBytes = entry.method === 8
+              ? await decompressRawDeflate(entry.rawCompData)
+              : entry.rawCompData;
+            const xmlStr = dec.decode(plainBytes);
+            const updatedXml = patchWorksheetXml(xmlStr, matchedSheet);
+            const newPlainBytes = enc.encode(updatedXml);
+            entry.crc = crc32(newPlainBytes);
+            entry.uncompSize = newPlainBytes.length;
+            entry.rawCompData = entry.method === 8
+              ? await compressRawDeflate(newPlainBytes)
+              : newPlainBytes;
+          } else if (entry.name === 'xl/workbook.xml') {
+            // Força o Excel a recalcular todas as fórmulas e totais ao abrir
+            const plainBytes = entry.method === 8
+              ? await decompressRawDeflate(entry.rawCompData)
+              : entry.rawCompData;
+            let wbXml = dec.decode(plainBytes);
+            if (wbXml.includes('<calcPr')) {
+              wbXml = wbXml.replace(/<calcPr[^>]*\/>/, '<calcPr calcId="191029" fullCalcOnLoad="1"/>');
+            }
+            const newPlainBytes = enc.encode(wbXml);
+            entry.crc = crc32(newPlainBytes);
+            entry.uncompSize = newPlainBytes.length;
+            entry.rawCompData = entry.method === 8
+              ? await compressRawDeflate(newPlainBytes)
+              : newPlainBytes;
+          }
+        }
+
+        const outZipBytes = buildZipFile(entries);
+        const blob = new Blob([outZipBytes], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `KRM - FOLHA PAGAMENTO FOPAG - PRONTA.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('✅ Download concluído: KRM - FOLHA PAGAMENTO FOPAG - PRONTA.xlsx');
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao exportar arquivo Excel: ' + err.message);
+      }
+    }
+
+    // Upload direto de qualquer planilha .xlsx do computador da Natani
+    async function handleFileUpload(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      try {
+        const buf = await file.arrayBuffer();
+        const zipBytes = new Uint8Array(buf);
+        APP_STATE.rawXlsxBytes = zipBytes;
+
+        const entries = await parseZipEntries(zipBytes);
+        const dec = new TextDecoder('utf-8');
+
+        // 1. Lê sharedStrings.xml
+        const ssEntry = entries.find(e => e.name === 'xl/sharedStrings.xml');
+        const sharedStrings = [];
+        if (ssEntry) {
+          const ssPlain = ssEntry.method === 8 ? await decompressRawDeflate(ssEntry.rawCompData) : ssEntry.rawCompData;
+          const ssDoc = new DOMParser().parseFromString(dec.decode(ssPlain), 'application/xml');
+          const siList = ssDoc.getElementsByTagName('si');
+          for (let i = 0; i < siList.length; i++) {
+            const tList = siList[i].getElementsByTagName('t');
+            let txt = '';
+            for (let j = 0; j < tList.length; j++) txt += tList[j].textContent || '';
+            sharedStrings.push(txt);
+          }
+        }
+
+        const sheetDefs = [
+          { id: 'krm_mensal', name: 'KRM MENSAL', entry: 'xl/worksheets/sheet3.xml', type: 'MENSAL', company: 'KRM' },
+          { id: 'krm_comissao', name: 'KRM COMISSAO', entry: 'xl/worksheets/sheet4.xml', type: 'COMISSAO', company: 'KRM' },
+          { id: 'jr_mensal', name: 'JR MENSAL', entry: 'xl/worksheets/sheet5.xml', type: 'MENSAL', company: 'JR' },
+          { id: 'jr_comissao', name: 'JR COMISSAO', entry: 'xl/worksheets/sheet6.xml', type: 'COMISSAO', company: 'JR' },
+          { id: 'kipper_mensal', name: 'KIPPER MENSAL', entry: 'xl/worksheets/sheet7.xml', type: 'MENSAL', company: 'KIPPER' },
+          { id: 'kipper_comissao', name: 'KIPPER COMISSAO', entry: 'xl/worksheets/sheet8.xml', type: 'COMISSAO', company: 'KIPPER' }
+        ];
+
+        const loadedSheets = [];
+        for (const sd of sheetDefs) {
+          const ent = entries.find(e => e.name === sd.entry);
+          if (!ent) continue;
+          const plain = ent.method === 8 ? await decompressRawDeflate(ent.rawCompData) : ent.rawCompData;
+          const doc = new DOMParser().parseFromString(dec.decode(plain), 'application/xml');
+          const rows = doc.getElementsByTagName('row');
+          const drivers = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            const rEl = rows[i];
+            const rIdx = parseInt(rEl.getAttribute('r'), 10);
+            if (rIdx < 3) continue;
+            const cells = rEl.getElementsByTagName('c');
+            const map = {};
+            for (let j = 0; j < cells.length; j++) {
+              const cEl = cells[j];
+              const col = (cEl.getAttribute('r') || '').replace(/[0-9]/g, '');
+              const vEl = cEl.getElementsByTagName('v')[0];
+              if (!vEl) continue;
+              let val = vEl.textContent;
+              if (cEl.getAttribute('t') === 's') {
+                val = sharedStrings[parseInt(val, 10)] || val;
+              }
+              map[col] = val;
+            }
+            if (map['B'] && !String(map['B']).includes('TOTAIS')) {
+              drivers.push({
+                row: rIdx,
+                code: String(map['A'] || ''),
+                name: String(map['B'] || ''),
+                role: String(map['C'] || ''),
+                D: parseFloat(map['D']) || 0,
+                E: parseFloat(map['E']) || 0,
+                F: parseFloat(map['F']) || 0,
+                I: parseFloat(map['I']) || 0,
+                K: parseFloat(map['K']) || 0,
+                M: parseFloat(map['M']) || 0,
+                O: parseFloat(map['O']) || 0,
+                Q: parseFloat(map['Q']) || 0,
+                S: parseFloat(map['S']) || 0,
+                Y: parseFloat(map['Y']) || 0,
+                Z: parseFloat(map['Z']) || 0,
+                AD: parseInt(map['AD'], 10) || 0,
+                AL: parseFloat(map['AL']) || 0,
+                AM: parseFloat(map['AM']) || 0,
+                AN: parseFloat(map['AN']) || 0,
+                AO: parseFloat(map['AO']) || 0
+              });
+            }
+          }
+          loadedSheets.push({ ...sd, drivers });
+        }
+
+        APP_STATE.sheets = loadedSheets;
+        recalcAllRows();
+        saveState();
+        document.getElementById('lockScreen').style.display = 'none';
+        renderTabs();
+        renderTable();
+        showToast(`📂 Planilha "${file.name}" carregada com sucesso!`);
+      } catch (err) {
+        console.error(err);
+        alert('Não foi possível ler a planilha .xlsx: ' + err.message);
+      }
+    }
+
+    // =========================================================================
+    // 10. UTILITÁRIOS (TEMA, TOAST E INICIALIZAÇÃO)
+    // =========================================================================
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isLight = html.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        html.removeAttribute('data-theme');
+        document.getElementById('btnTheme').textContent = '☀️';
+      } else {
+        html.setAttribute('data-theme', 'light');
+        document.getElementById('btnTheme').textContent = '🌙';
+      }
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const div = document.createElement('div');
+      div.className = 'toast';
+      div.textContent = msg;
+      container.appendChild(div);
+      setTimeout(() => {
+        div.style.opacity = '0';
+        div.style.transition = 'opacity 0.3s';
+        setTimeout(() => div.remove(), 300);
+      }, 3400);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Navegação estilo Excel: ao apertar Enter em qualquer campo da tabela, salva e desce para a linha de baixo na mesma coluna!
+      const tbody = document.getElementById('fopagTbody');
+      if (tbody) {
+        tbody.addEventListener('keydown', (ev) => {
+          if (ev.key !== 'Enter') return;
+          const input = ev.target.closest('input.cell-input');
+          if (!input) return;
+          ev.preventDefault();
+          const td = input.closest('td');
+          const tr = input.closest('tr');
+          if (!td || !tr) return;
+          const colIndex = Array.from(tr.children).indexOf(td);
+          const allRows = Array.from(tbody.querySelectorAll('tr'));
+          const rowIndex = allRows.indexOf(tr);
+          const nextRowIndex = ev.shiftKey ? rowIndex - 1 : rowIndex + 1;
+
+          // Dispara o onchange caso o valor tenha mudado
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Foca na mesma coluna da próxima linha após o re-render
+          setTimeout(() => {
+            const updatedRows = tbody.querySelectorAll('tr');
+            const targetRow = updatedRows[nextRowIndex];
+            if (targetRow && targetRow.children[colIndex]) {
+              const nextInput = targetRow.children[colIndex].querySelector('input.cell-input');
+              if (nextInput) {
+                nextInput.focus();
+                nextInput.select();
+              }
+            }
+          }, 15);
+        });
+      }
+
+      // Se estiver rodando localmente no computador ou já tiver senha salva, desbloqueia automático!
+      const isLocal = ['localhost', '127.0.0.1', ''].includes(location.hostname) || location.protocol === 'file:';
+      const savedPass = localStorage.getItem('krm_fopag_pass');
+      if (isLocal) {
+        unlockVault('krm2026');
+      } else if (savedPass) {
+        unlockVault(savedPass);
+      }
+    });
+  </script>
+</body>
+</html>
+
